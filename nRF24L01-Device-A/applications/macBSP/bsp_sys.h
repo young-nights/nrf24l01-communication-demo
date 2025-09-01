@@ -21,8 +21,7 @@
 #include <drv_spi.h>
 #include "main.h"
 
-#include <bsp_nrf24l01_driver.h>
-#include <bsp_nrf24l01_spi.h>
+
 
 
 
