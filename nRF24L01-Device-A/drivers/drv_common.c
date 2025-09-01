@@ -13,7 +13,7 @@
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>
-static void reboot(uint8_t argc, char **argv)
+void reboot(uint8_t argc, char **argv)
 {
     rt_hw_cpu_reset();
 }

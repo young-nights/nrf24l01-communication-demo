@@ -1,4 +1,4 @@
-#include <bsp_nrf24l01_spi.h>
+
 /*
  * Copyright (c) 2006-2021, RT-Thread Development Team
  *
@@ -8,7 +8,7 @@
  * Date           Author       Notes
  * 2025-07-29     Administrator       the first version
  */
-
+#include <bsp_nrf24l01_spi.h>
 
 #if USE_CUSTOMER_NRF24L01
 
@@ -74,8 +74,6 @@ const static struct nrf24_func_opts g_nrf24_func_ops = {
 #define     nRF24_SPI_NAME    "nrf24_spi1"
 /* 宏定义SPI总线 */
 #define     nRF24_SPI_BUS     "spi1"
-/* 失能引脚 */
-#define     nRF24_PIN_NONE    -1
 
 int nrf24_port_init(nrf24_port_t halport, char *spi_dev_name, int ce_pin, int irq_pin, void(*irq_callback)(nrf24_port_t halport))
 {

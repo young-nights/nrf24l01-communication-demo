@@ -16,6 +16,8 @@
 #define USE_CUSTOMER_NRF24L01 1
 #if USE_CUSTOMER_NRF24L01
 
+/* 失能引脚 */
+#define     nRF24_PIN_NONE    -1
 
 /* 片选引脚 -- CS */
 #define     nRF24_CS_PORT     LORA_CE_GPIO_Port
@@ -40,11 +42,11 @@
 
 
 
-#define SUB_HALPORT_WIRTE(_nrf24, buf, len)                             _nrf24->halport.ops->write(&_nrf24->halport, buf, len)
-#define SUB_HALPORT_SEND_THEN_RECV(_nrf24, tbuf, tlen, rbuf, rlen)      _nrf24->halport.ops->send_then_recv(&_nrf24->halport, tbuf, tlen, rbuf, rlen)
-#define SUB_HALPORT_SEND_THEN_SEND(_nrf24, buf1, len1, buf2, len2)      _nrf24->halport.ops->send_then_send(&_nrf24->halport, buf1, len1, buf2, len2)
-#define SUB_HALPORT_RESET_CE(_nrf24)                                    _nrf24->halport.ops->reset_ce(&_nrf24->halport)
-#define SUB_HALPORT_SET_CE(_nrf24)                                      _nrf24->halport.ops->set_ce(&_nrf24->halport)
+#define SUB_HALPORT_WIRTE(_nrf24, buf, len)                             _nrf24->halport.nrf24_ops->nrf24_write(&_nrf24->halport, buf, len)
+#define SUB_HALPORT_SEND_THEN_RECV(_nrf24, tbuf, tlen, rbuf, rlen)      _nrf24->halport.nrf24_ops->nrf24_send_then_recv(&_nrf24->halport, tbuf, tlen, rbuf, rlen)
+#define SUB_HALPORT_SEND_THEN_SEND(_nrf24, buf1, len1, buf2, len2)      _nrf24->halport.nrf24_ops->nrf24_send_then_send(&_nrf24->halport, buf1, len1, buf2, len2)
+#define SUB_HALPORT_RESET_CE(_nrf24)                                    _nrf24->halport.nrf24_ops->nrf24_reset_ce(&_nrf24->halport)
+#define SUB_HALPORT_SET_CE(_nrf24)                                      _nrf24->halport.nrf24_ops->nrf24_set_ce(&_nrf24->halport)
 
 #define NRF24_HALPORT_WRITE(buf, len)                                   SUB_HALPORT_WIRTE(nrf24, buf, len)
 #define NRF24_HALPORT_SEND_THEN_RECV(tbuf, tlen, rbuf, rlen)            SUB_HALPORT_SEND_THEN_RECV(nrf24, tbuf, tlen, rbuf, rlen)
@@ -70,7 +72,7 @@ struct nrf24_port
 
 struct nrf24_func_opts{
     int (* nrf24_send_then_recv)(struct nrf24_port *halport, const uint8_t *tbuf, uint8_t tlen, uint8_t *rbuf, uint8_t rlen);
-    int (* nrf24_send_then_send)(struct nrf24_port *halport, const uint8_t *tbuf_1, uint8_t tlen_1, uint8_t *tbuf_2, uint8_t tlen_2);
+    int (* nrf24_send_then_send)(struct nrf24_port *halport, const uint8_t *tbuf_1, uint8_t tlen_1, const uint8_t *tbuf_2, uint8_t tlen_2);
     int (* nrf24_write)(struct nrf24_port *halport, const uint8_t *buf, uint8_t len);
     int (* nrf24_set_ce)(struct nrf24_port *halport);
     int (* nrf24_reset_ce)(struct nrf24_port *halport);
@@ -82,7 +84,7 @@ struct nrf24_func_opts{
 
 //---------spi函数声明-------------------
 
-
+int nrf24_port_init(nrf24_port_t halport, char *spi_dev_name, int ce_pin, int irq_pin, void(*irq_callback)(nrf24_port_t halport));
 
 #endif
 
