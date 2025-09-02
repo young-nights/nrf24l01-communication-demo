@@ -70,6 +70,8 @@ const static struct nrf24_func_opts g_nrf24_func_ops = {
 
 
 
+
+
 /* 宏定义SPI名称 */
 #define     nRF24_SPI_NAME    "nrf24_spi1"
 /* 宏定义SPI总线 */

@@ -18,7 +18,7 @@ config PKGS_DIR
 config PLATFORM_DIR
     string
     option env="PLATFORM_DIR"
-    default "D:/RT-ThreadStudio/workspace/nRF24L01-Device-A/platform"
+    default "C:/Users/18452/Documents/Github_youngnights/nRF24L01-communication-demo/nRF24L01-Device-A/platform"
 
 source "$RTT_DIR/Kconfig"
 source "$PKGS_DIR/Kconfig"

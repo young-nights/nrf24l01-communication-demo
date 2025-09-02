@@ -12,99 +12,7 @@
 #include <rtthread.h>
 
 
-// 命令映射
-#define NRF24CMD_R_REG          0x00  // 读寄存器
-#define NRF24CMD_W_REG          0x20  // 写寄存器
-#define NRF24CMD_R_RX_PAYLOAD   0x61  // 读接收缓冲区
-#define NRF24CMD_W_TX_PAYLOAD   0xA0  // 写发送缓冲区
-#define NRF24CMD_FLUSH_TX       0xE1  // 清空发送FIFO
-#define NRF24CMD_FLUSH_RX       0xE2  // 清空接收FIFO
-#define NRF24CMD_REUSE_TX_PL    0xE3  // PTX模式下使用，重装载发送缓冲区
-#define NRF24CMD_ACTIVATE       0x50  // 使能命令，后接数据 0x73
-#define NRF24CMD_R_RX_PL_WID    0x60  // 读顶层接收FIFO大小
-#define NRF24CMD_W_ACK_PAYLOAD  0xA8  // RX模式下使用，写应答发送缓冲区
-
-// 寄存器映射
-#define NRF24REG_CONFIG         0x00  // 配置收发状态，CRC校验模式以及收发状态响应方式
-#define NRF24REG_EN_AA          0x01  // 自动应答功能设置
-#define NRF24REG_EN_RXADDR      0x02  // 可用信道设置
-#define NRF24REG_SETUP_AW       0x03  // 收发地址宽度设置
-#define NRF24REG_SETUP_RETR     0x04  // 自动重发功能设置
-#define NRF24REG_RF_CH          0x05  // 工作频率设置
-#define NRF24REG_RF_SETUP       0x06  // 发射速率、功耗功能设置
-#define NRF24REG_STATUS         0x07  // 状态寄存器
-#define NRF24REG_OBSERVE_TX     0x08  // 发送监测功能
-#define NRF24REG_RPD            0x09  // 接收功率检测
-#define NRF24REG_RX_ADDR_P0     0x0A  // 频道0接收数据地址
-#define NRF24REG_RX_ADDR_P1     0x0B  // 频道1接收数据地址
-#define NRF24REG_RX_ADDR_P2     0x0C  // 频道2接收数据地址
-#define NRF24REG_RX_ADDR_P3     0x0D  // 频道3接收数据地址
-#define NRF24REG_RX_ADDR_P4     0x0E  // 频道4接收数据地址
-#define NRF24REG_RX_ADDR_P5     0x0F  // 频道5接收数据地址
-#define NRF24REG_TX_ADDR        0x10  // 发送地址寄存器
-#define NRF24REG_RX_PW_P0       0x11  // 接收频道0接收数据长度
-#define NRF24REG_RX_PW_P1       0x12  // 接收频道1接收数据长度
-#define NRF24REG_RX_PW_P2       0x13  // 接收频道2接收数据长度
-#define NRF24REG_RX_PW_P3       0x14  // 接收频道3接收数据长度
-#define NRF24REG_RX_PW_P4       0x15  // 接收频道4接收数据长度
-#define NRF24REG_RX_PW_P5       0x16  // 接收频道5接收数据长度
-#define NRF24REG_FIFO_STATUS    0x17  // FIFO栈入栈出状态寄存器设置
-#define NRF24REG_DYNPD          0x1C  // 动态数据包长度
-#define NRF24REG_FEATURE        0x1D  // 特点寄存器
-
-// 寄存器功能位掩码部分映射
-// CONFIG
-#define NRF24BITMASK_RX_DR      ((uint8_t)(1<<6))  // 接收完成中断使能位
-#define NRF24BITMASK_TX_DS      ((uint8_t)(1<<5))  // 发送完成中断使能位
-#define NRF24BITMASK_MAX_RT     ((uint8_t)(1<<4))  // 达最大重发次数中断使能位
-#define NRF24BITMASK_EN_CRC     ((uint8_t)(1<<3))  // CRC使能位
-#define NRF24BITMASK_CRCO       ((uint8_t)(1<<2))  // CRC编码方式 （1B or 2B）
-#define NRF24BITMASK_PWR_UP     ((uint8_t)(1<<1))  // 上（掉）电
-#define NRF24BITMASK_PRIM_RX    ((uint8_t)(1))     // PR（T）X
-//SETUP_AW
-#define NRF24BITMASK_AW         ((uint8_t)(0x03))  // RX/TX地址宽度
-//SETUP_RETR
-#define NRF24BITMASK_ARD        ((uint8_t)(0xF0))  // 重发延时
-#define NRF24BITMASK_ARC        ((uint8_t)(0x0F))  // 重发最大次数
-//RF_CH
-#define NRF24BITMASK_RF_CH      ((uint8_t)(0x7F))  // 射频频道
-//RF_SETUP
-#define NRF24BITMASK_RF_DR      ((uint8_t)(1<<3))  // 空中速率
-#define NRF24BITMASK_RF_PWR     ((uint8_t)(0x06))  // 发射功率
-//STATUS
-#define NRF24BITMASK_RX_DR      ((uint8_t)(1<<6))  // 接收完成标志位
-#define NRF24BITMASK_TX_DS      ((uint8_t)(1<<5))  // 发送完成标志位
-#define NRF24BITMASK_MAX_RT     ((uint8_t)(1<<4))  // 最大重发次数标志位
-#define NRF24BITMASK_RX_P_NO    ((uint8_t)(0x0E))  // RX_FIFO状态标志区位
-#define NRF24BITMASK_TX_FULL    ((uint8_t)(1))     // TX_FIFO满标志位
-//OBSERVE_TX
-#define NRF24BITMASK_PLOS_CNT   ((uint8_t)(0xF0))  // 丢包计数
-#define NRF24BITMASK_ARC_CNT    ((uint8_t)(0x0F))  // 重发计数
-//CD
-#define NRF24BITMASK_CD         ((uint8_t)(1))     // 载波检测标志位
-//通用掩码，RX_PW_P[0::5] 掩码相同
-#define NRF24BITMASK_RX_PW_P_   ((uint8_t)(0x3F))  // 数据管道RX-Payload中的字节数
-//FIFO_STATUS
-#define NRF24BITMASK_TX_REUSE   ((uint8_t)(1<<6))
-#define NRF24BITMASK_TX_FULL2    ((uint8_t)(1<<5))
-#define NRF24BITMASK_TX_EMPTY   ((uint8_t)(1<<4))
-#define NRF24BITMASK_RX_RXFULL  ((uint8_t)(1<<1))
-#define NRF24BITMASK_RX_EMPTY   ((uint8_t)(1))
-//FEATURE
-#define NRF24BITMASK_EN_DPL     ((uint8_t)(1<<2))  // 动态长度使能位
-#define NRF24BITMASK_EN_ACK_PAY ((uint8_t)(1<<1))  // Payload with ACK 使能位
-#define NRF24BITMASK_EN_DYN_ACK ((uint8_t)(1))     // W_TX_PAYLOAD_NOACK 命令使能位
-//通用掩码，适用于多个寄存器： EN_AA, EN_RXADDR, DYNPD
-#define NRF24BITMASK_PIPE_0     ((uint8_t)(1))
-#define NRF24BITMASK_PIPE_1     ((uint8_t)(1<<1))
-#define NRF24BITMASK_PIPE_2     ((uint8_t)(1<<2))
-#define NRF24BITMASK_PIPE_3     ((uint8_t)(1<<3))
-#define NRF24BITMASK_PIPE_4     ((uint8_t)(1<<4))
-#define NRF24BITMASK_PIPE_5     ((uint8_t)(1<<5))
-
-
-
-
+// 参数设置 ------------------------------------------------------------------------------------------
 struct nrf24_onchip_cfg
 {
     struct {
@@ -229,13 +137,13 @@ static void __write_reg(nrf24_t nrf24, uint8_t reg, uint8_t data)
  * @param   nrf24_t ：结构体句柄
  *          reg     ：寄存器地址
  *          mask    : 需要操作的位掩码（连续的 1）
- *          value   : 要写入的新值（已对齐到最低位）
+ *          value   : 要写入的新值（0或者1，已对齐到最低位）
  *
  * @note    为什么要专门写这个函数？
  *
- *          答：NRF24L01+ 的寄存器通常一个字节里挤了很多功能位：
- *          ------------------------------------------------------------------------
- *          | 寄存器   | bit7 | bit6 | bit5 | bit4 | bit3 | bit2    | bit1 | bit0    |
+ *          答：NRF24L01 的寄存器通常一个字节里挤了很多功能位：
+ *          -----------------------------------------------------------------------
+ *          | 寄存器   | bit7 | bit6 | bit5 | bit4 | bit3 | bit2    | bit1 | bit0  |
  *          | ------ | ---- | ---- | ---- | ---- | ---- | ------- | ---- | ------- |
  *          | CONFIG | –    | –    | –    | –    | –    | EN\_CRC | CRCO | PWR\_UP |
  *
@@ -260,7 +168,7 @@ static void __write_reg_bits(nrf24_t nrf24, uint8_t reg, uint8_t mask, uint8_t v
 /***
  * @brief 用来查看芯片当前状态
  *         ----------------------------------------------
- *        | 位名                              | 含义                                       |
+ *        | 位名               | 含义                   |
  *        | ------------------ | ---------------------  |
  *        | bit7 (RX\_DR)      | 收到数据中断标志                |
  *        | bit6 (TX\_DS)      | 发送完成中断标志                |
@@ -292,9 +200,9 @@ static void clear_status(nrf24_t nrf24, uint8_t bitmask)
  * @brief   把 OBSERVE_TX 里的丢包计数和重发计数清零
  * @param   OBSERVE_TX 寄存器
  *
- *          | 位    |   字段        |                       含义                                   |
+ *          | 位  |   字段  |                       含义                   |
  *          | --- | --------- | ------------------------------------------ |
- *          | 7:4 | PLOS\_CNT | 发送失败导致丢包的计数值（到达 15 后不再增加）|
+ *          | 7:4 | PLOS\_CNT | 发送失败导致丢包的计数值（到达 15 后不再增加） |
  *          | 3:0 | ARC\_CNT  | 最近一次发送时的自动重发次数                                 |
  *
  * @note    这个函数的作用等价于 芯片收到后把 PLOS_CNT 和 ARC_CNT 全部清零
@@ -308,7 +216,7 @@ static void clear_observe_tx(nrf24_t nrf24)
 
 /***
  * @brief   读取 RX FIFO 顶部数据包长度
- * @note    NRF24L01+ 在接收模式下会把每个到达的数据包先压入 RX FIFO
+ * @note    NRF24L01 在接收模式下会把每个到达的数据包先压入 RX FIFO
  *          每个包在 FIFO 里占用的字节数 并不固定（除非关掉了 Dynamic Payload）
  *          因此，在真正读出数据之前，需要先知道 “当前 FIFO 最顶上的那个包到底有多少字节”
  *
@@ -330,7 +238,7 @@ static uint8_t read_top_rxfifo_width(nrf24_t nrf24)
 
 
 /***
- * @brief   让 NRF24L01+ 进入掉电模式（Power-Down）
+ * @brief   让 NRF24L01 进入掉电模式（Power-Down）
  * @note    将 CONFIG 寄存器的 PWR_UP 位清 0 即可立即进入功耗最低的掉电状态;
  *          此时芯片停止所有射频活动，SPI 仍可访问寄存器，典型电流仅 900 nA;
  *          唤醒时再将 PWR_UP 置 1，并等待 1.5 ms Tpd2stby 延时即可
@@ -341,7 +249,7 @@ void nrf24_enter_power_down_mode(nrf24_t nrf24)
 }
 
 /***
- * @brief   让 NRF24L01+ 退出掉电模式，进入上电待机状态（Standby-I）
+ * @brief   让 NRF24L01 退出掉电模式，进入上电待机状态（Standby-I）
  * @note    将 CONFIG 寄存器的 PWR_UP 置 1 后，芯片从 Power-Down 唤醒;
  *          必须等待至少 1.5 ms（Tpd2stby），晶振稳定后才能进行 CE 拉高、
  *          发送或接收等操作。此时功耗约 26 µA（Standby-I）
@@ -483,17 +391,92 @@ static int update_onchip_config(nrf24_t nrf24, const struct nrf24_onchip_cfg *cc
 {
     uint8_t tmp;
 
+    rt_kprintf("----------------------------------\r\n");
+
+    // 1. 先进入掉电模式
     nrf24_enter_power_down_mode(nrf24);
     ensure_rww_features_activated(nrf24);
 
+    /***
+     *  0x01: 设置信道的自动应答模式
+     *  ccfg->en_aa.p0 = 1;
+     *  ccfg->en_aa.p1 = 1;
+     *  ccfg->en_aa.p2 = 1;
+     *  ccfg->en_aa.p3 = 1;
+     *  ccfg->en_aa.p4 = 1;
+     *  ccfg->en_aa.p5 = 1;
+     *
+     *  0011 1111 --> 0x3F --> 6个信道全部可以自动应答
+     */
     __write_reg(nrf24, NRF24REG_EN_AA,      *((uint8_t *)&ccfg->en_aa));
+    rt_kprintf("[WRITE]ccfg->en_aa           = 0x%02x.\r\n", *((uint8_t *)&ccfg->en_aa));
+
+    /***
+     *  0x02: 设置可用的接收信道
+     *  ccfg->en_rxaddr.p0 = ucfg->rxpipe0.bl_enabled = RT_TRUE;
+     *  ccfg->en_rxaddr.p1 = ucfg->rxpipe1.bl_enabled = RT_TRUE;
+     *  ccfg->en_rxaddr.p2 = ucfg->rxpipe2.bl_enabled = RT_FALSE;
+     *  ccfg->en_rxaddr.p3 = ucfg->rxpipe3.bl_enabled = RT_FALSE;
+     *  ccfg->en_rxaddr.p4 = ucfg->rxpipe4.bl_enabled = RT_FALSE;
+     *  ccfg->en_rxaddr.p5 = ucfg->rxpipe5.bl_enabled = RT_FALSE;
+     *
+     *  0000 0011 --> 0x03 --> pip1,pipe1这2个信道可以接收
+     */
     __write_reg(nrf24, NRF24REG_EN_RXADDR,  *((uint8_t *)&ccfg->en_rxaddr));
+    rt_kprintf("[WRITE]ccfg->en_rxaddr       = 0x%02x.\r\n", *((uint8_t *)&ccfg->en_rxaddr));
+
+    /***
+     *  0x03: 设置地址宽度，这个指令针对所有信道
+     *  ccfg->setup_aw.aw = 3;  -->  0000 0011 --> 0x03 --> 设置为5字节宽度
+     */
     __write_reg(nrf24, NRF24REG_SETUP_AW,   *((uint8_t *)&ccfg->setup_aw));
+    rt_kprintf("[WRITE]ccfg->setup_aw        = 0x%02x.\r\n", *((uint8_t *)&ccfg->setup_aw));
+
+    /***
+     *  0x04: 设置建立自动重发机制
+     *  ccfg->setup_retr.ard = 1;   // 500us
+     *  ccfg->setup_retr.arc = 15;  // 15 times
+     */
     __write_reg(nrf24, NRF24REG_SETUP_RETR, *((uint8_t *)&ccfg->setup_retr));
+    rt_kprintf("[WRITE]ccfg->setup_retr      = 0x%02x.\r\n", *((uint8_t *)&ccfg->setup_retr));
+
+    /***
+     *  0x05: 设置RF通道
+     *  ccfg->rf_ch.rf_ch = ucfg->channel = 100;
+     */
     __write_reg(nrf24, NRF24REG_RF_CH,      *((uint8_t *)&ccfg->rf_ch));
+    rt_kprintf("[WRITE]ccfg->rf_ch           = 0x%02x.\r\n", *((uint8_t *)&ccfg->rf_ch));
+
+    /***
+     *  0x06: 设置RF射频速率等
+     *  lna_hcurr= 1
+     *  rf_pwr   = ucfg->power  = RF_POWER_0dBm = 3
+     *  rf_dr    = ucfg->adr    = ADR_2Mbps     = 1
+     *  pll_lock = 0
+     */
     __write_reg(nrf24, NRF24REG_RF_SETUP,   *((uint8_t *)&ccfg->rf_setup));
+    rt_kprintf("[WRITE]ccfg->rf_setup        = 0x%02x.\r\n", *((uint8_t *)&ccfg->rf_setup));
+
+    /***
+     *  0x1C: 设置不同信道数据动态长度使能
+     *  ccfg->dynpd.p0 = 1;
+     *  ccfg->dynpd.p1 = 1;
+     *  ccfg->dynpd.p2 = 1;
+     *  ccfg->dynpd.p3 = 1;
+     *  ccfg->dynpd.p4 = 1;
+     *  ccfg->dynpd.p5 = 1;
+     */
     __write_reg(nrf24, NRF24REG_DYNPD,      *((uint8_t *)&ccfg->dynpd));
+    rt_kprintf("[WRITE]ccfg->dynpd           = 0x%02x.\r\n", *((uint8_t *)&ccfg->dynpd));
+
+    /***
+     *  0x1D: 设置扩展功能
+     *  ccfg->feature.en_dyn_ack = 1;
+     *  ccfg->feature.en_ack_pay = 1;
+     *  ccfg->feature.en_dpl = 1;
+     */
     __write_reg(nrf24, NRF24REG_FEATURE,    *((uint8_t *)&ccfg->feature));
+    rt_kprintf("[WRITE]ccfg->feature         = 0x%02x.\r\n", *((uint8_t *)&ccfg->feature));
 
     tmp = NRF24CMD_W_REG | NRF24REG_TX_ADDR;
     NRF24_HALPORT_SEND_THEN_SEND(&tmp, 1, ccfg->tx_addr, 5);
@@ -511,6 +494,7 @@ static int update_onchip_config(nrf24_t nrf24, const struct nrf24_onchip_cfg *cc
     NRF24_HALPORT_SEND_THEN_SEND(&tmp, 1, &ccfg->rx_addr_p5, 1);
 
     __write_reg(nrf24, NRF24REG_CONFIG,     *((uint8_t *)&ccfg->config));
+    rt_kprintf("[WRITE]ccfg->config          = 0x%02x.\r\n", *((uint8_t *)&ccfg->config));
 
     return RT_EOK;
 }
@@ -526,16 +510,34 @@ static int read_onchip_config(nrf24_t nrf24, struct nrf24_onchip_cfg *ccfg)
 {
     struct nrf24_onchip_cfg real_cfg;
     uint8_t tmp;
+    rt_kprintf("----------------------------------\r\n");
 
     *((uint8_t *)&real_cfg.en_aa)      =  __read_reg(nrf24, NRF24REG_EN_AA);
+    rt_kprintf("[READ]real_cfg.en_aa        = 0x%02x.\r\n", *((uint8_t *)&real_cfg.en_aa));
+
     *((uint8_t *)&real_cfg.en_rxaddr)  =  __read_reg(nrf24, NRF24REG_EN_RXADDR);
+    rt_kprintf("[READ]real_cfg.en_rxaddr    = 0x%02x.\r\n", *((uint8_t *)&real_cfg.en_rxaddr));
+
     *((uint8_t *)&real_cfg.setup_aw)   =  __read_reg(nrf24, NRF24REG_SETUP_AW);
+    rt_kprintf("[READ]real_cfg.setup_aw     = 0x%02x.\r\n", *((uint8_t *)&real_cfg.setup_aw));
+
     *((uint8_t *)&real_cfg.setup_retr) =  __read_reg(nrf24, NRF24REG_SETUP_RETR);
+    rt_kprintf("[READ]real_cfg.setup_retr   = 0x%02x.\r\n", *((uint8_t *)&real_cfg.setup_retr));
+
     *((uint8_t *)&real_cfg.rf_ch)      =  __read_reg(nrf24, NRF24REG_RF_CH);
+    rt_kprintf("[READ]real_cfg.rf_ch        = 0x%02x.\r\n", *((uint8_t *)&real_cfg.rf_ch));
+
     *((uint8_t *)&real_cfg.rf_setup)   =  __read_reg(nrf24, NRF24REG_RF_SETUP);
+    rt_kprintf("[READ]real_cfg.rf_setup     = 0x%02x.\r\n", *((uint8_t *)&real_cfg.rf_setup));
+
     *((uint8_t *)&real_cfg.dynpd)      =  __read_reg(nrf24, NRF24REG_DYNPD);
+    rt_kprintf("[READ]real_cfg.dynpd        = 0x%02x.\r\n", *((uint8_t *)&real_cfg.dynpd));
+
     *((uint8_t *)&real_cfg.feature)    =  __read_reg(nrf24, NRF24REG_FEATURE);
+    rt_kprintf("[READ]real_cfg.feature      = 0x%02x.\r\n", *((uint8_t *)&real_cfg.feature));
+
     *((uint8_t *)&real_cfg.config)     =  __read_reg(nrf24, NRF24REG_CONFIG);
+    rt_kprintf("[READ]real_cfg.config       = 0x%02x.\r\n", *((uint8_t *)&real_cfg.config));
 
     tmp = NRF24CMD_R_REG | NRF24REG_TX_ADDR;
     NRF24_HALPORT_SEND_THEN_RECV(&tmp, 1, (uint8_t *)&real_cfg.tx_addr, 5);
@@ -582,11 +584,13 @@ static int build_onchip_config(struct nrf24_onchip_cfg *ccfg, const struct nrf24
 
     /* Default config */
     ccfg->setup_retr.ard = 1;   // 500us
-    ccfg->setup_retr.arc = 11;  // 11 times
+    ccfg->setup_retr.arc = 15;  // 15 times
     ccfg->setup_aw.aw = 3;      // 5-byte address width
 
     ccfg->rf_setup.pll_lock = 0;
     ccfg->rf_setup.lna_hcurr = 1;
+    ccfg->rf_setup.rf_pwr = ucfg->power;
+    ccfg->rf_setup.rf_dr = ucfg->adr;
 
     ccfg->en_aa.p0 = 1;
     ccfg->en_aa.p1 = 1;
@@ -620,8 +624,6 @@ static int build_onchip_config(struct nrf24_onchip_cfg *ccfg, const struct nrf24
     ccfg->config.en_crc = 1;
     ccfg->config.crco = ucfg->crc;
 
-    ccfg->rf_setup.rf_pwr = ucfg->power;
-    ccfg->rf_setup.rf_dr = ucfg->adr;
     ccfg->rf_ch.rf_ch = ucfg->channel;
 
     rt_memcpy(ccfg->tx_addr, ucfg->txaddr, sizeof(ucfg->txaddr));
@@ -682,8 +684,9 @@ static int check_halport(nrf24_port_t halport)
     // 逐字节比对
     for (int i = 0; i < 5; i++)
     {
-        if (addr[i] != i+1)
+        if (addr[i] != i+1){
             return RT_ERROR;
+        }
     }
 
     // 恢复现场
@@ -711,6 +714,16 @@ int nrf24_fill_default_config_on(nrf24_cfg_t cfg)
     cfg->channel = 100;         // 无线频道设为 100（2.500 GHz），远离常用 Wi-Fi 频段
     cfg->role = ROLE_NONE;      // 角色先标记为‘未设定’，后面再决定是发送端还是接收端
 
+    /***
+     * 给 5字节地址逐字节赋值
+     * 发送端地址:txaddr[i] = {0x00,0x01,0x02,0x03,0x04}
+     * 信道0地址: rxpipe0.addr[i] = {0x00,0x01,0x02,0x03,0x04}
+     * 信道1地址: rxpipe1.addr[i] = {0x01,0x02,0x03,0x04,0x05}
+     * 信道2地址: rxpipe2.addr[i] = 0x02
+     * 信道3地址: rxpipe3.addr[i] = 0x03
+     * 信道4地址: rxpipe4.addr[i] = 0x04
+     * 信道5地址: rxpipe5.addr[i] = 0x05
+     */
     for (int i = 0; i < 5; i++)
     {
         cfg->txaddr[i] = i;
@@ -722,9 +735,13 @@ int nrf24_fill_default_config_on(nrf24_cfg_t cfg)
     cfg->rxpipe4.addr = 4;
     cfg->rxpipe5.addr = 5;
 
+    /***
+     * 通过以下指令对信道进行使能/失能
+     * 启用 管道 0 和管道 1，可以接收数据
+     * 禁用 管道 2~5，默认不接收数据（需要时再手动打开）
+     */
     cfg->rxpipe0.bl_enabled = RT_TRUE;
     cfg->rxpipe1.bl_enabled = RT_TRUE;
-
     cfg->rxpipe2.bl_enabled = RT_FALSE;
     cfg->rxpipe3.bl_enabled = RT_FALSE;
     cfg->rxpipe4.bl_enabled = RT_FALSE;
@@ -792,22 +809,25 @@ int nrf24_init(nrf24_t nrf24, char *spi_dev_name, int ce_pin, int irq_pin, const
     RT_ASSERT(cb != RT_NULL);
 
     rt_memset(nrf24, 0, sizeof(struct nrf24));
+
+    // 创建一个发送的二值信号量
     nrf24->send_sem = rt_sem_create("nrfsend", 0, RT_IPC_FLAG_FIFO);
     if (nrf24->send_sem == RT_NULL)
     {
         LOG_E("Failed to create sem");
         return RT_ERROR;
     }
-
+    // 如果启用了中断引脚
     if (irq_pin != nRF24_PIN_NONE)
     {
+        // 先创建一个中断的二值信号量
         nrf24->sem = rt_sem_create("nrfirq", 0, RT_IPC_FLAG_FIFO);
         if (nrf24->sem == RT_NULL)
         {
             LOG_E("Failed to create sem");
             return RT_ERROR;
         }
-
+        // 启用IRQ的标志位
         nrf24->flags.using_irq = RT_TRUE;
     }
     else
@@ -819,34 +839,49 @@ int nrf24_init(nrf24_t nrf24, char *spi_dev_name, int ce_pin, int irq_pin, const
     rt_memcpy(&nrf24->cfg, cfg, sizeof(struct nrf24_cfg));
     nrf24->cfg._irq_pin = irq_pin;
 
-    if (nrf24_port_init(&nrf24->halport, spi_dev_name, ce_pin, irq_pin, __irq_handler) != RT_EOK)
+    if (nrf24_port_init(&nrf24->halport, spi_dev_name, ce_pin, irq_pin, __irq_handler) != RT_EOK){
+        LOG_E("nRF24L01 port initialize false.\r\n");
         return RT_ERROR;
+    }
 
-    if (check_halport(&nrf24->halport) != RT_EOK)
+    /* 通过 SPI 通讯，检测硬件链路是否有问题 */
+    if (check_halport(&nrf24->halport) != RT_EOK){
+        LOG_E("nRF24L01 check_halport false.\r\n");
         return RT_ERROR;
+    }
 
-    if (build_onchip_config(&onchip_cfg, &nrf24->cfg) != RT_EOK)
+    /* 配置寄存器参数 */
+    if (build_onchip_config(&onchip_cfg, &nrf24->cfg) != RT_EOK){
+        LOG_E("nRF24L01 build_onchip_config false.\r\n");
         return RT_ERROR;
+    }
 
-    if (update_onchip_config(nrf24, &onchip_cfg) != RT_EOK)
+    /* 更新寄存器参数 */
+    if (update_onchip_config(nrf24, &onchip_cfg) != RT_EOK){
+        LOG_E("nRF24L01 update_onchip_config false.\r\n");
         return RT_ERROR;
+    }
 
-    if (check_onchip_config(nrf24, &onchip_cfg) != RT_EOK)
+
+    /* 检查寄存器参数 */
+    if (check_onchip_config(nrf24, &onchip_cfg) != RT_EOK){
+        LOG_E("nRF24L01 check_onchip_config false.\r\n");
         return RT_ERROR;
+    }
 
+    /* 清空 发送/接收 队列 */
     flush_tx_fifo(nrf24);
     flush_rx_fifo(nrf24);
+    /* 清除中断标志位 */
     clear_status(nrf24, NRF24BITMASK_RX_DR | NRF24BITMASK_TX_DS | NRF24BITMASK_MAX_RT);
     clear_observe_tx(nrf24);
 
+    /* 进入上电模式 */
     nrf24_enter_power_up_mode(nrf24);
+    /* 拉高CE引脚 -- 接收模式 */
     nrf24->halport.nrf24_ops->nrf24_set_ce(&nrf24->halport);
 
     LOG_I("Successfully initialized");
-
-#ifdef NRF24_USING_SHELL_CMD
-    g_debug_nrf24 = nrf24;
-#endif
 
     return RT_EOK;
 }
@@ -890,10 +925,14 @@ int nrf24_default_init(nrf24_t nrf24, char *spi_dev_name, int ce_pin, int irq_pi
 {
     struct nrf24_cfg cfg;
 
+    /* 先设置默认参数 */
     nrf24_fill_default_config_on(&cfg);
     cfg.role = role;
+    /* 进行初始化，并返回值 */
     return nrf24_init(nrf24, spi_dev_name, ce_pin, irq_pin, cb, &cfg);
 }
+
+
 
 nrf24_t nrf24_default_create(char *spi_dev_name, int ce_pin, int irq_pin, const struct nrf24_callback *cb, nrf24_role_et role)
 {
@@ -905,7 +944,7 @@ nrf24_t nrf24_default_create(char *spi_dev_name, int ce_pin, int irq_pin, const 
     }
     else
     {
-
+        /* 这里只有这个If里面的函数做初始化操作，其他的都是校验与内存的开辟的操作 */
         if (nrf24_default_init(new_nrf24, spi_dev_name, ce_pin, irq_pin, cb, role) != RT_EOK)
         {
             rt_free(new_nrf24);
@@ -919,13 +958,12 @@ nrf24_t nrf24_default_create(char *spi_dev_name, int ce_pin, int irq_pin, const 
     return new_nrf24;
 }
 
+
 /**
  * check status and inform
  * @param nrf24 pointer of nrf24 instance
  * @return -x:error   0:nothing   1:tx_done   2:rx_done   3:tx_rx_done
  * @note 这个函数负责轮询/等待中断，把芯片当前状态翻译成上层能看懂的事件
- *
- *
  */
 int nrf24_run(nrf24_t nrf24)
 {
