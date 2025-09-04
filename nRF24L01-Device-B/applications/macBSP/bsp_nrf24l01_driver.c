@@ -168,8 +168,7 @@ int nRF24L01_Update_Parameter(nrf24_t nrf24)
 
     rt_kprintf("----------------------------------\r\n");
 
-    // 1. 先进入掉电模式
-    nRF24L01_Enter_Power_Down_Mode(nrf24);
+
 
     // 3. 写EN_AA寄存器
     nRF24L01_Write_Reg_Data(nrf24, NRF24REG_EN_AA,           *((uint8_t *)&nrf24->nrf24_cfg.en_aa));
@@ -232,7 +231,53 @@ int nRF24L01_Update_Parameter(nrf24_t nrf24)
  */
 int nRF24L01_Read_Onchip_Parameter(nrf24_t nrf24)
 {
+    struct nRF24L01_PARAMETER_STRUCT real_cfg;
+    uint8_t tmp;
+    rt_kprintf("----------------------------------\r\n");
 
+    *((uint8_t *)&real_cfg.en_aa)           =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_EN_AA);
+    rt_kprintf("[READ]real_cfg.en_aa        = 0x%02x.\r\n", *((uint8_t *)&real_cfg.en_aa));
+
+    *((uint8_t *)&real_cfg.en_rxaddr)       =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_EN_RXADDR);
+    rt_kprintf("[READ]real_cfg.en_rxaddr    = 0x%02x.\r\n", *((uint8_t *)&real_cfg.en_rxaddr));
+
+    *((uint8_t *)&real_cfg.setup_aw)        =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_SETUP_AW);
+    rt_kprintf("[READ]real_cfg.setup_aw     = 0x%02x.\r\n", *((uint8_t *)&real_cfg.setup_aw));
+
+    *((uint8_t *)&real_cfg.setup_retr)      =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_SETUP_RETR);
+    rt_kprintf("[READ]real_cfg.setup_retr   = 0x%02x.\r\n", *((uint8_t *)&real_cfg.setup_retr));
+
+    *((uint8_t *)&real_cfg.rf_ch)           =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_RF_CH);
+    rt_kprintf("[READ]real_cfg.rf_ch        = 0x%02x.\r\n", *((uint8_t *)&real_cfg.rf_ch));
+
+    *((uint8_t *)&real_cfg.rf_setup)        =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_RF_SETUP);
+    rt_kprintf("[READ]real_cfg.rf_setup     = 0x%02x.\r\n", *((uint8_t *)&real_cfg.rf_setup));
+
+    *((uint8_t *)&real_cfg.dynpd)           =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_DYNPD);
+    rt_kprintf("[READ]real_cfg.dynpd        = 0x%02x.\r\n", *((uint8_t *)&real_cfg.dynpd));
+
+    *((uint8_t *)&real_cfg.feature)         =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_FEATURE);
+    rt_kprintf("[READ]real_cfg.feature      = 0x%02x.\r\n", *((uint8_t *)&real_cfg.feature));
+
+    *((uint8_t *)&real_cfg.config)          =  nRF24L01_Read_Reg_Data(nrf24, NRF24REG_CONFIG);
+    rt_kprintf("[READ]real_cfg.config       = 0x%02x.\r\n", *((uint8_t *)&real_cfg.config));
+
+    tmp = NRF24CMD_R_REG | NRF24REG_TX_ADDR;
+    nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.txaddr, 5);
+    tmp = NRF24CMD_R_REG | NRF24REG_RX_ADDR_P0;
+    nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p0, 5);
+    tmp = NRF24CMD_R_REG | NRF24REG_RX_ADDR_P1;
+    nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p1, 5);
+    tmp = NRF24CMD_R_REG | NRF24REG_RX_ADDR_P2;
+    nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p2, 1);
+    tmp = NRF24CMD_R_REG | NRF24REG_RX_ADDR_P3;
+    nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p3, 1);
+    tmp = NRF24CMD_R_REG | NRF24REG_RX_ADDR_P4;
+    nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p4, 1);
+    tmp = NRF24CMD_R_REG | NRF24REG_RX_ADDR_P5;
+    nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p5, 1);
+
+    return RT_EOK;
 }
 
 

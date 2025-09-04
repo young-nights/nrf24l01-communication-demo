@@ -40,29 +40,7 @@ void nRF24L01_Thread_entry(void* parameter)
         LOG_I("Succeed to create nrf24l01 irq semaphore. \r\n");
         nrf24->nrf24_flags.using_irq = RT_TRUE;
     }
-    /*1. 获取中断引脚编号 */
-    nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 5);
-    /*2. 初始化SPI */
-    nRF24L01_SPI_Init(&nrf24->port_api);
-    /*3. 配置nRF24L01的参数*/
-    nRF24L01_Param_Config(&nrf24->nrf24_cfg);
-    /*4. 配置启用中断引脚和中断回调函数 */
-    nRF24L01_IQR_GPIO_Config(&nrf24->port_api);
-    /*5. 通过回环通信，检测SPI硬件链路是否有误 */
-    if (nRF24L01_Check_SPI_Community(nrf24) != RT_EOK){
-        LOG_E("nRF24L01 check_halport false.\r\n");
-    }
-    else{
-        LOG_I("nRF24L01 check_halport successful.\r\n");
-    }
-    /*6. 更新寄存器参数 */
-    if (nRF24L01_Update_Parameter(nrf24) != RT_EOK){
-        LOG_E("nRF24L01 update_onchip_config false.\r\n");
-    }
-    else{
-        LOG_E("nRF24L01 update_onchip_config successful.\r\n");
-    }
-    /*7. 检测寄存器参数 */
+
 
 
     for(;;)
@@ -93,7 +71,7 @@ int nRF24L01_Thread_Init(void)
 
     return RT_EOK;
 }
-
+INIT_APP_EXPORT(nRF24L01_Thread_Init);
 
 
 
