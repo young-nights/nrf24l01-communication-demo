@@ -15,8 +15,7 @@
 rt_sem_t nrf24_send_sem = RT_NULL;
 /* 创建nRF24L01进入中断的二值信号量 */
 rt_sem_t nrf24_irq_sem = RT_NULL;
-/* 创建nRF24L01全局结构体接口 */
-nrf24_t nrf24;
+
 /**
   * @brief  This thread entry is used for nRF24L01
   * @retval void
@@ -38,7 +37,7 @@ void nRF24L01_Thread_entry(void* parameter)
     }
     else{
         LOG_I("Succeed to create nrf24l01 irq semaphore. \r\n");
-        nrf24->nrf24_flags.using_irq = RT_TRUE;
+//        nrf24->nrf24_flags.using_irq = RT_TRUE;
     }
 
 

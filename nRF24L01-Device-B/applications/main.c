@@ -12,8 +12,9 @@
 #include "bsp_nrf24l01_spi.h"
 #include <rtdbg.h>
 #include "bsp_sys.h"
+#include "bsp_nrf24l01_driver.h"
 
-extern nrf24_t nrf24;
+
 
 /**
   * @brief  The application entry point.
@@ -48,9 +49,17 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
   /*1. 获取中断引脚编号 */
-//  nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 5);
-//  /*2. 初始化SPI */
-//  nRF24L01_SPI_Init(&nrf24->port_api);
+  /* 创建nRF24L01全局结构体接口 */
+  nrf24_t nrf24 = malloc(sizeof(nrf24_t));
+  if (nrf24 == NULL) {
+      LOG_E("nrf24 malloc error. \r\n");
+  }
+  else{
+      LOG_I("nrf24 malloc successful. \r\n");
+  }
+  nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 5);
+  /*2. 初始化SPI */
+  nRF24L01_SPI_Init(&nrf24->port_api);
 //  /*3. 配置nRF24L01的参数*/
 //  nRF24L01_Param_Config(&nrf24->nrf24_cfg);
 //  /*4. 配置启用中断引脚和中断回调函数 */
