@@ -52,11 +52,18 @@ void nRF24L01_Thread_entry(void* parameter)
     if (nRF24L01_Check_SPI_Community(nrf24) != RT_EOK){
         LOG_E("nRF24L01 check_halport false.\r\n");
     }
-    /*6. 更新寄存器参数 */
-    if (update_onchip_config(nrf24, &onchip_cfg) != RT_EOK){
-        LOG_E("nRF24L01 update_onchip_config false.\r\n");
-        return RT_ERROR;
+    else{
+        LOG_I("nRF24L01 check_halport successful.\r\n");
     }
+    /*6. 更新寄存器参数 */
+    if (nRF24L01_Update_Parameter(nrf24) != RT_EOK){
+        LOG_E("nRF24L01 update_onchip_config false.\r\n");
+    }
+    else{
+        LOG_E("nRF24L01 update_onchip_config successful.\r\n");
+    }
+    /*7. 检测寄存器参数 */
+
 
     for(;;)
     {

@@ -200,7 +200,11 @@ static void clear_status(nrf24_t nrf24, uint8_t bitmask)
  * @brief   把 OBSERVE_TX 里的丢包计数和重发计数清零
  * @param   OBSERVE_TX 寄存器
  *
+<<<<<<< Updated upstream
  *          | 位  |   字段  |                       含义                   |
+=======
+ *          | 位  |   字段    |                       含义                 |
+>>>>>>> Stashed changes
  *          | --- | --------- | ------------------------------------------ |
  *          | 7:4 | PLOS\_CNT | 发送失败导致丢包的计数值（到达 15 后不再增加） |
  *          | 3:0 | ARC\_CNT  | 最近一次发送时的自动重发次数                                 |
