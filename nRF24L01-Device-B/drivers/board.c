@@ -39,7 +39,6 @@ RT_WEAK void rt_hw_board_init()
 
 
 
-
 /**
   * Initializes the Global MSP.
   */
@@ -201,3 +200,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
   }
 
 }
+
+
+

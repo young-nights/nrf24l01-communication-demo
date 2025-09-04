@@ -56,7 +56,6 @@ void MX_SPI1_Init(void);
 
 /* Exported functions prototypes ---------------------------------------------*/
 
-
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
@@ -70,6 +69,7 @@ void MX_SPI1_Init(void);
 #define nRF24L01_MOSI_GPIO_Port GPIOA
 #define nRF24L01_IRQ_Pin GPIO_PIN_5
 #define nRF24L01_IRQ_GPIO_Port GPIOC
+#define nRF24L01_IRQ_EXTI_IRQn EXTI9_5_IRQn
 #define nRF24L01_CSN_Pin GPIO_PIN_0
 #define nRF24L01_CSN_GPIO_Port GPIOB
 #define nRF24L01_CE_Pin GPIO_PIN_1

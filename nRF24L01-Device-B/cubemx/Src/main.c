@@ -237,8 +237,8 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : nRF24L01_IRQ_Pin */
   GPIO_InitStruct.Pin = nRF24L01_IRQ_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(nRF24L01_IRQ_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : nRF24L01_CSN_Pin nRF24L01_CE_Pin */
@@ -248,6 +248,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -255,7 +259,6 @@ void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
 
 #ifdef  USE_FULL_ASSERT
 /**
