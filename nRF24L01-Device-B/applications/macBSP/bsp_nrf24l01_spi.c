@@ -33,11 +33,11 @@ int nRF24L01_SPI_Init(nrf24_port_api_t port_api)
     /* 查找SPI设备 */
     port_api->spi_dev_nrf24 = (struct rt_spi_device *)rt_device_find(nRF24_SPI_NAME);
     if(port_api->spi_dev_nrf24 == NULL){
-        LOG_E("nRF24 spi device is not found!\r\n");
+        LOG_E("LOG:%d. nRF24 spi device is not found!",Record.ulog_cnt++);
         return RT_ERROR;
     }
     else{
-        LOG_I("nRF24 spi device is successfully!\r\n");
+        LOG_I("LOG:%d. nRF24 spi device is successfully!",Record.ulog_cnt++);
     }
 
     /***
@@ -51,7 +51,7 @@ int nRF24L01_SPI_Init(nrf24_port_api_t port_api)
     struct rt_spi_configuration nrf24_spi_cfg;
 
     nrf24_spi_cfg.data_width = 8;
-    nrf24_spi_cfg.max_hz = 10*1000*1000; /* 10M,SPI max 10MHz,lora 4-wire spi */
+    nrf24_spi_cfg.max_hz = 1*1000*1000; /* 10M,SPI max 10MHz,lora 4-wire spi */
     nrf24_spi_cfg.mode = RT_SPI_MASTER | RT_SPI_MODE_0 | RT_SPI_MSB;
     rt_spi_configure(port_api->spi_dev_nrf24, &nrf24_spi_cfg); /* 使能参数 */
 
@@ -90,7 +90,7 @@ int nRF24L01_IQR_GPIO_Config(nrf24_port_api_t port_api)
                         nRF24L01_INT_Callback,
                         RT_NULL);                       /* 不需要参数 */
     rt_pin_irq_enable(GET_PIN(C, 5), PIN_IRQ_ENABLE);
-    return 0;
+    return RT_EOK;
 }
 
 

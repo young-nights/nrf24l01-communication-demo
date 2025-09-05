@@ -247,7 +247,7 @@ struct nRF24L01_STRUCT
     /* nRF24L01 的标志位的结构体 */
     struct nRF24L01_Flag_Struct nrf24_flags;
     /* 创建nRF24L01的操作函数句柄 */
-    const struct nRF24L01_FUNC_OPS nrf24_ops;
+    struct nRF24L01_FUNC_OPS nrf24_ops;
 };
 typedef struct nRF24L01_STRUCT *nrf24_t;
 
@@ -264,7 +264,7 @@ extern rt_sem_t nrf24_send_sem;
 extern rt_sem_t nrf24_irq_sem;
 
 // 函数声明 -------------------------------------------------------------------
-void nRF24L01_Param_Config(nrf24_param_t param);
+int nRF24L01_Param_Config(nrf24_param_t param);
 int nRF24L01_Check_SPI_Community(nrf24_t port_ops);
 int nRF24L01_Update_Parameter(nrf24_t nrf24);
 int nRF24L01_Read_Onchip_Parameter(nrf24_t nrf24);
@@ -287,7 +287,8 @@ void nRF24L01_Flush_TX_FIFO(nrf24_t nrf24);
 void nRF24L01_Flush_RX_FIFO(nrf24_t nrf24);
 void NRF24L01_Set_TxAddr(nrf24_t nrf24, rt_uint8_t *addr_buf, rt_uint8_t length);
 int nRF24L01_Send_Packet(nrf24_t nrf24, uint8_t *data, uint8_t len, uint8_t pipe);
-
+void nRF24L01_Set_Role_Mode(nrf24_t nrf24, nrf24_role_et mode);
+void nRF24L01_Ensure_RWW_Features_Activated(nrf24_t nrf24);
 
 // bsp_nrf24l01_spi 文件中函数声明 -------------------------------------------------------------------
 int nRF24L01_SPI_Init(nrf24_port_api_t port_api);

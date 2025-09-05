@@ -38,7 +38,7 @@
                                HAL_GPIO_WritePin ( nRF24_NSS_PORT, nRF24_NSS_PIN , GPIO_PIN_RESET );
 
 
-
+extern const struct nRF24L01_FUNC_OPS g_nrf24_func_ops;
 
 
 

@@ -16,14 +16,14 @@
  * @brief 配置nRF24L01的参数值
  * @note  以下参数请所代表的值详见"nRF24L01P Datasheet.pdf"
  */
-void nRF24L01_Param_Config(nrf24_param_t param)
+int nRF24L01_Param_Config(nrf24_param_t param)
 {
     RT_ASSERT(param != RT_NULL);
     rt_memset(param, 0, sizeof(struct nRF24L01_PARAMETER_STRUCT));
 
     /* CONFIG */
-    param->config.prim_rx       = ROLE_PTX;
-    param->config.pwr_up        = 1;
+    param->config.prim_rx       = ROLE_PRX;
+    param->config.pwr_up        = 0;
     param->config.crco          = CRC_2_BYTE;
     param->config.en_crc        = 1;
     param->config.mask_max_rt   = 0;
@@ -86,6 +86,9 @@ void nRF24L01_Param_Config(nrf24_param_t param)
     param->rx_addr_p3 = 3;
     param->rx_addr_p4 = 4;
     param->rx_addr_p5 = 5;
+
+    return RT_EOK;
+
 }
 
 
@@ -169,7 +172,6 @@ int nRF24L01_Update_Parameter(nrf24_t nrf24)
     rt_kprintf("----------------------------------\r\n");
 
 
-
     // 3. 写EN_AA寄存器
     nRF24L01_Write_Reg_Data(nrf24, NRF24REG_EN_AA,           *((uint8_t *)&nrf24->nrf24_cfg.en_aa));
     rt_kprintf("[WRITE]ccfg->en_aa           = 0x%02x.\r\n", *((uint8_t *)&nrf24->nrf24_cfg.en_aa));
@@ -206,6 +208,7 @@ int nRF24L01_Update_Parameter(nrf24_t nrf24)
     nRF24L01_Write_Reg_Data(nrf24, NRF24REG_CONFIG,          *((uint8_t *)&nrf24->nrf24_cfg.config));
     rt_kprintf("[WRITE]ccfg->config          = 0x%02x.\r\n", *((uint8_t *)&nrf24->nrf24_cfg.config));
 
+
     cmd = NRF24CMD_W_REG | NRF24REG_TX_ADDR;
     nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &cmd, 1, nrf24->nrf24_cfg.txaddr, 5);
     cmd = NRF24CMD_W_REG | NRF24REG_RX_ADDR_P0;
@@ -220,6 +223,7 @@ int nRF24L01_Update_Parameter(nrf24_t nrf24)
     nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &cmd, 1, &nrf24->nrf24_cfg.rx_addr_p4, 1);
     cmd = NRF24CMD_W_REG | NRF24REG_RX_ADDR_P5;
     nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &cmd, 1, &nrf24->nrf24_cfg.rx_addr_p5, 1);
+
 
     return RT_EOK;
 }
@@ -276,6 +280,7 @@ int nRF24L01_Read_Onchip_Parameter(nrf24_t nrf24)
     nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p4, 1);
     tmp = NRF24CMD_R_REG | NRF24REG_RX_ADDR_P5;
     nrf24->nrf24_ops.nrf24_send_then_recv(&nrf24->port_api, &tmp, 1, (uint8_t *)&real_cfg.rx_addr_p5, 1);
+
 
     return RT_EOK;
 }
@@ -414,6 +419,12 @@ void nRF24L01_Enter_Power_Down_Mode(nrf24_t nrf24)
 void nRF24L01_Enter_Power_Up_Mode(nrf24_t nrf24)
 {
     nRF24L01_Write_Reg_Bits(nrf24, NRF24REG_CONFIG, NRF24BITMASK_PWR_UP, 1);
+#define ENABLE_PWR_LOG 0
+#if ENABLE_PWR_LOG
+    uint8_t config_reg_data = 0;
+    config_reg_data = nRF24L01_Read_Reg_Data(nrf24, NRF24REG_CONFIG);
+    LOG_I("LOG:%d. raw config_reg_data = 0x%02x .\r\n",Record.ulog_cnt++, config_reg_data);
+#endif
 }
 
 
@@ -539,30 +550,57 @@ int nRF24L01_Send_Packet(nrf24_t nrf24, uint8_t *data, uint8_t len, uint8_t pipe
 
 
 
+/**
+ * @brief  把用户数据写到 TX FIFO（PTX 模式）或 ACK Payload 缓冲区（PRX 模式），并立即触发发送或等待对方读取
+ *
+ */
+void nRF24L01_Set_Role_Mode(nrf24_t nrf24, nrf24_role_et mode)
+{
+#define ENABLE_ROLE_LOG 0
+#if ENABLE_ROLE_LOG
+    uint8_t config_reg_data = 0;
+    config_reg_data = nRF24L01_Read_Reg_Data(nrf24, NRF24REG_CONFIG);
+    LOG_I("LOG:%d. raw config_reg_data = 0x%02x .\r\n",Record.ulog_cnt++, config_reg_data);
+#endif
+
+    if(mode == ROLE_PRX){
+        nRF24L01_Write_Reg_Bits(nrf24, NRF24REG_CONFIG, NRF24BITMASK_PRIM_RX, 1);
+#if ENABLE_ROLE_LOG
+        rt_thread_mdelay(5);
+        config_reg_data = nRF24L01_Read_Reg_Data(nrf24, NRF24REG_CONFIG);
+        LOG_I("LOG:%d. config_reg_data = 0x%02x .\r\n",Record.ulog_cnt++, config_reg_data);
+#endif
+    }
+    else if(mode == ROLE_PTX){
+        nRF24L01_Write_Reg_Bits(nrf24, NRF24REG_CONFIG, NRF24BITMASK_PRIM_RX, 0);
+#if ENABLE_ROLE_LOG
+        rt_thread_mdelay(5);
+        config_reg_data = nRF24L01_Read_Reg_Data(nrf24, NRF24REG_CONFIG);
+        LOG_I("LOG:%d. config_reg_data = 0x%02x .\r\n",Record.ulog_cnt++, config_reg_data);
+#endif
+    }
+}
 
 
 
 /***
- * @brief   解锁动态载荷、ACK 带载荷等 RWW（Read-While-Write）扩展功能,并做一次性标记避免重复激活
- * @note    动态载荷    ：Payload 长度可变
- *          ACK带载荷  ：ACK 帧里也能附带数据
- *                      为什么要这么做：
- *          1.  芯片上电后，动态载荷（DPL）、ACK 带载荷等功能默认是锁住的
- *          2.  必须先发 ACTIVATE 命令 数据 0x73 才能解锁
- *          3.  解锁只需一次；重复发送无意义，因此用 activated_features 标志位记录“是否已经做过”
+ * @brief   nRF24L01的"解锁"指令，专门用于访问扩展功能寄存器（DYNPD 和 FEATURE）
+ * @note    使用场景：
+ *          1. 第一次写 FEATURE 寄存器
+ *          2. 第一次写 DYNPD 寄存器
+ *
+ *          [注意]
+ *          1. 发一次即可，之后随意读写这两个寄存器，无需重复解锁
+ *          2. 若上电后从未发ACTIVATE，写 FEATURE/DYNPD 会被静默忽略
  */
-//void ensure_rww_features_activated(nrf24_t nrf24)
-//{
-//    // 如果还没激活过
-//    if (!nrf24->flags.activated_features)
-//    {
-//        // SPI 发 2 字节：0x50 0x73
-//        uint8_t tmp[2] = {NRF24CMD_ACTIVATE, 0x73};
-//        NRF24_HALPORT_WRITE(tmp, 2);
-//        // 标记已激活
-//        nrf24->flags.activated_features = RT_TRUE;
-//    }
-//}
+void nRF24L01_Ensure_RWW_Features_Activated(nrf24_t nrf24)
+{
+    if(nrf24->nrf24_flags.activated_features != 1){
+        uint8_t tmp[2] = {NRF24CMD_ACTIVATE, 0x73};
+        nrf24->nrf24_ops.nrf24_write(&nrf24->port_api, &tmp[0], 2);
+        nrf24->flags.activated_features = RT_TRUE;
+    }
+}
 
 
 
