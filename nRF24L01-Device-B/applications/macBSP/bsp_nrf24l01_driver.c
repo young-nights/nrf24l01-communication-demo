@@ -565,6 +565,7 @@ void nRF24L01_Set_Role_Mode(nrf24_t nrf24, nrf24_role_et mode)
 
     if(mode == ROLE_PRX){
         nRF24L01_Write_Reg_Bits(nrf24, NRF24REG_CONFIG, NRF24BITMASK_PRIM_RX, 1);
+        nrf24->nrf24_cfg.config.prim_rx = ROLE_PRX;
 #if ENABLE_ROLE_LOG
         rt_thread_mdelay(5);
         config_reg_data = nRF24L01_Read_Reg_Data(nrf24, NRF24REG_CONFIG);
@@ -573,6 +574,7 @@ void nRF24L01_Set_Role_Mode(nrf24_t nrf24, nrf24_role_et mode)
     }
     else if(mode == ROLE_PTX){
         nRF24L01_Write_Reg_Bits(nrf24, NRF24REG_CONFIG, NRF24BITMASK_PRIM_RX, 0);
+        nrf24->nrf24_cfg.config.prim_rx = ROLE_PTX;
 #if ENABLE_ROLE_LOG
         rt_thread_mdelay(5);
         config_reg_data = nRF24L01_Read_Reg_Data(nrf24, NRF24REG_CONFIG);
@@ -598,13 +600,90 @@ void nRF24L01_Ensure_RWW_Features_Activated(nrf24_t nrf24)
     if(nrf24->nrf24_flags.activated_features != 1){
         uint8_t tmp[2] = {NRF24CMD_ACTIVATE, 0x73};
         nrf24->nrf24_ops.nrf24_write(&nrf24->port_api, &tmp[0], 2);
-        nrf24->flags.activated_features = RT_TRUE;
+        nrf24->nrf24_flags.activated_features = RT_TRUE;
     }
 }
 
 
+/***
+ * @brief
+ * @note
+ */
+int nRF24L01_Run(nrf24_t nrf24)
+{
+    /* ret_flag: 1->发送完成  2->接收完成 */
+    rt_uint8_t ret_flag = 0;
+
+    // 1. 如果使用IRQ中断，则获取信号量等待释放
+    if(nrf24->nrf24_flags.using_irq == RT_TRUE){
+        rt_sem_take(nrf24_irq_sem, RT_WAITING_FOREVER);
+    }
+
+    // 2. 读取status状态标志，并清除中断触发标志位
+     nrf24->nrf24_flags.status = nRF24L01_Read_Status_Register(nrf24);
+     nRF24L01_Clear_Status_Register(nrf24, NRF24BITMASK_RX_DR | NRF24BITMASK_TX_DS);
+
+     // 3. 分析哪条信道接收的数据
+     uint8_t pipe = (nrf24->nrf24_flags.status & NRF24BITMASK_RX_P_NO) >> 1;
+
+     // 4. 角色 = 发送端（PTX）
+     if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PTX)
+     {
+         // 4.1 读取status寄存器的 NRF24BITMASK_MAX_RT位，如果为1，说明达到最大重发次数，发送失败
+         if(nrf24->nrf24_flags.status & NRF24BITMASK_MAX_RT){
+             nRF24L01_Flush_TX_FIFO(nrf24);
+             nRF24L01_Clear_Status_Register(nrf24, NRF24BITMASK_MAX_RT);
+             if(nrf24->nrf24_cb.nrf24l01_tx_done){
+                 nrf24->nrf24_cb.nrf24l01_tx_done(nrf24, NRF24_PIPE_NONE);
+             }
+             return -1;
+         }
+
+         /* 4.2 收到 ACK 带载荷（PTX 也能收） */
+         if(nrf24->nrf24_flags.status & NRF24BITMASK_RX_DR){
+             uint8_t rec_data[32];
+             uint8_t len = nRF24L01_Read_Top_RXFIFO_Width(nrf24);
+             nRF24L01_Read_Rx_Payload(nrf24, rec_data, len);
+             if(nrf24->nrf24_cb.nrf24l01_rx_ind){
+                 nrf24->nrf24_cb.nrf24l01_rx_ind(nrf24, rec_data, len, pipe);
+             }
+             ret_flag |= 2;
+         }
 
 
+         /* 4.3 发送完成 */
+         if(nrf24->nrf24_flags.status & NRF24BITMASK_TX_DS){
+             if(nrf24->nrf24_cb.nrf24l01_tx_done){
+                 nrf24->nrf24_cb.nrf24l01_tx_done(nrf24, pipe);
+             }
+             ret_flag |= 1;
+         }
+     }
+
+
+     // 5. 角色 = 接收端（PTX）
+     if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PRX)
+     {
+         if(pipe < 5){
+             uint8_t data_buf[32];
+             uint8_t length = nRF24L01_Read_Top_RXFIFO_Width(nrf24);
+             nRF24L01_Read_Rx_Payload(nrf24, data_buf, length);
+             if(nrf24->nrf24_cb.nrf24l01_rx_ind){
+                 nrf24->nrf24_cb.nrf24l01_rx_ind(nrf24, data_buf, length, pipe);
+             }
+             ret_flag |= 2;
+
+             if(rt_sem_trytake(nrf24_send_sem) ==  RT_EOK){
+                 if(nrf24->nrf24_cb.nrf24l01_tx_done){
+                     nrf24->nrf24_cb.nrf24l01_tx_done(nrf24,pipe);
+                 }
+                 ret_flag |= 1;
+             }
+
+         }
+     }
+     return ret_flag;
+}
 
 
 

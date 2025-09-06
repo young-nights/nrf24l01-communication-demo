@@ -201,6 +201,7 @@ typedef struct nRF24L01_PARAMETER_STRUCT *nrf24_param_t;
 struct nRF24L01_Flag_Struct{
     uint8_t activated_features      :1;
     uint8_t using_irq               :1;
+    uint8_t status;
 }__attribute__((aligned(1)));
 
 
@@ -235,6 +236,17 @@ struct nRF24L01_FUNC_OPS
 
 
 
+typedef struct nRF24L01_STRUCT *nrf24_t;
+
+/***
+ * nRF24L01的软件回调函数，这个回调与事件相关
+ */
+struct nrf24_callback
+{
+    void (*nrf24l01_rx_ind)(nrf24_t nrf24, uint8_t *data, uint8_t len, int pipe);
+    void (*nrf24l01_tx_done)(nrf24_t nrf24, rt_uint8_t pipe);
+};
+
 /***
  * nRF24L01的最上层的结构体
  */
@@ -248,8 +260,9 @@ struct nRF24L01_STRUCT
     struct nRF24L01_Flag_Struct nrf24_flags;
     /* 创建nRF24L01的操作函数句柄 */
     struct nRF24L01_FUNC_OPS nrf24_ops;
+    /* nRF24L01的事件回调函数句柄 */
+    struct nrf24_callback nrf24_cb;
 };
-typedef struct nRF24L01_STRUCT *nrf24_t;
 
 
 
@@ -289,6 +302,7 @@ void NRF24L01_Set_TxAddr(nrf24_t nrf24, rt_uint8_t *addr_buf, rt_uint8_t length)
 int nRF24L01_Send_Packet(nrf24_t nrf24, uint8_t *data, uint8_t len, uint8_t pipe);
 void nRF24L01_Set_Role_Mode(nrf24_t nrf24, nrf24_role_et mode);
 void nRF24L01_Ensure_RWW_Features_Activated(nrf24_t nrf24);
+int nRF24L01_Run(nrf24_t nrf24);
 
 // bsp_nrf24l01_spi 文件中函数声明 -------------------------------------------------------------------
 int nRF24L01_SPI_Init(nrf24_port_api_t port_api);

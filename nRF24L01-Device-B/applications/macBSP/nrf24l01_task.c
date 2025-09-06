@@ -11,6 +11,8 @@
 #include <rtdbg.h>
 #include "bsp_nrf24l01_driver.h"
 
+/* 前向声明一下nrf24l01的事件回调句柄 */
+const static struct nrf24_callback g_cb;
 /* 创建nRF24L01发送数据的二值信号量 */
 rt_sem_t nrf24_send_sem = RT_NULL;
 /* 创建nRF24L01进入中断的二值信号量 */
@@ -33,7 +35,7 @@ void nRF24L01_Thread_entry(void* parameter)
     }
 
 
-    /* 1. 创建初始化结构体 */
+    /* 1. 创建二值信号量 */
     nrf24_send_sem = rt_sem_create("nrf24_send", 0, RT_IPC_FLAG_FIFO);
     if(nrf24_send_sem == RT_NULL){
         LOG_E("Failed to create nrf24l01 send semaphore.");
@@ -62,7 +64,7 @@ void nRF24L01_Thread_entry(void* parameter)
 
     /* 4. 把spi底层函数整体拷贝到ops结构体中 */
     nrf24->nrf24_ops = g_nrf24_func_ops;
-
+    nrf24->nrf24_cb  = g_cb;
 
     /* 5. 配置nRF24L01的参数*/
     if(nRF24L01_Param_Config(&nrf24->nrf24_cfg) != RT_EOK){
@@ -95,7 +97,7 @@ void nRF24L01_Thread_entry(void* parameter)
     nrf24->nrf24_ops.nrf24_reset_ce();
 
     /* 9. 解锁高级扩展功能 */
-    nRF24L01_Ensure_RWW_Features_Activated();
+    nRF24L01_Ensure_RWW_Features_Activated(nrf24);
 
     /* 10. 更新寄存器参数 */
     if (nRF24L01_Update_Parameter(nrf24) != RT_EOK){
@@ -131,6 +133,9 @@ void nRF24L01_Thread_entry(void* parameter)
 
     for(;;)
     {
+
+        nRF24L01_Run(nrf24);
+
         rt_thread_mdelay(50);
     }
 }
@@ -168,16 +173,52 @@ INIT_APP_EXPORT(nRF24L01_Thread_Init);
 
 
 
+const static char *ROLE_TABLE[] = {"PTX", "PRX"};
+static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
+{
+    /*! Here just want to tell the user when the role is ROLE_PTX
+        the pipe have no special meaning except indicating (send) FAILED or OK
+        However, it will matter when the role is ROLE_PRX*/
+
+    static int cnt = 0;
+    static char tbuf[32];
+    cnt++;
+
+    if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PTX)
+    {
+        if(pipe == NRF24_PIPE_NONE){
+            rt_kprintf("tx_done failed");
+        }
+        else{
+            rt_kprintf("tx_done ok");
+        }
+    }
+    else
+    {
+        rt_kprintf("tx_done ok");
+    }
+
+    rt_kprintf(" (pipe%d)\n", pipe);
+    rt_sprintf(tbuf, "My role is %s [%dth]\n", ROLE_TABLE[nrf24->nrf24_cfg.config.prim_rx], cnt);
+    nRF24L01_Send_Packet(nrf24, (uint8_t *)tbuf,  rt_strlen(tbuf), pipe);
+}
 
 
 
 
+static void nrf24l01_rx_ind(nrf24_t nrf24, uint8_t *data, uint8_t len, int pipe)
+{
+    /*! Don't need to care the pipe if the role is ROLE_PTX */
+    rt_kprintf("(p%d): ", pipe);
+    rt_kprintf((char *)data);
+}
 
 
 
-
-
-
+const static struct nrf24_callback g_cb = {
+    .nrf24l01_rx_ind = nrf24l01_rx_ind,
+    .nrf24l01_tx_done = nrf24l01_tx_done,
+};
 
 
 
