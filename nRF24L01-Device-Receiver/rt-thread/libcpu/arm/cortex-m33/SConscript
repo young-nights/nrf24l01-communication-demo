@@ -8,19 +8,16 @@ cwd     = GetCurrentDir()
 src     = Glob('*.c') + Glob('*.cpp')
 CPPPATH = [cwd]
 
-if rtconfig.PLATFORM in ['armcc', 'armclang']:
+if rtconfig.PLATFORM == 'armcc' or rtconfig.PLATFORM == 'armclang':
     src += Glob('*_rvds.S')
 
-if rtconfig.PLATFORM in ['gcc']:
+if rtconfig.PLATFORM == 'gcc':
     src += Glob('*_init.S')
     src += Glob('*_gcc.S')
 
-if rtconfig.PLATFORM in ['iccarm']:
+if rtconfig.PLATFORM == 'iar':
     src += Glob('*_iar.S')
 
-if not GetDepend('RT_USING_MEM_PROTECTION') and not GetDepend('RT_USING_HW_STACK_GUARD'):
-    SrcRemove(src, 'mpu.c')
-
-group = DefineGroup('libcpu', src, depend = [''], CPPPATH = CPPPATH)
+group = DefineGroup('CPU', src, depend = [''], CPPPATH = CPPPATH)
 
 Return('group')

@@ -41,9 +41,6 @@
 extern const struct nRF24L01_FUNC_OPS g_nrf24_func_ops;
 
 
-
-
-
 #endif
 
 #endif /* APPLICATIONS_MACBSP_INC_BSP_LORA_SPI_H_ */

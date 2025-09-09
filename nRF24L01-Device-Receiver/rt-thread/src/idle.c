@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2022, RT-Thread Development Team
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,9 +16,6 @@
  * 2018-11-22     Jesven       add per cpu idle task
  *                             combine the code of primary and secondary cpu
  * 2021-11-15     THEWON       Remove duplicate work between idle and _thread_exit
- * 2023-09-15     xqyjlj       perf rt_hw_interrupt_disable/enable
- * 2023-11-07     xqyjlj       fix thread exit
- * 2023-12-10     xqyjlj       add _hook_spinlock
  */
 
 #include <rthw.h>
@@ -42,20 +39,24 @@
 #endif /* (RT_USING_IDLE_HOOK) || defined(RT_USING_HEAP) */
 #endif /* IDLE_THREAD_STACK_SIZE */
 
+#ifdef RT_USING_SMP
 #define _CPUS_NR                RT_CPUS_NR
+#else
+#define _CPUS_NR                1
+#endif /* RT_USING_SMP */
 
 static rt_list_t _rt_thread_defunct = RT_LIST_OBJECT_INIT(_rt_thread_defunct);
-static struct rt_spinlock _defunct_spinlock;
-static struct rt_thread idle_thread[_CPUS_NR];
-rt_align(RT_ALIGN_SIZE)
-static rt_uint8_t idle_thread_stack[_CPUS_NR][IDLE_THREAD_STACK_SIZE];
+
+static struct rt_thread idle[_CPUS_NR];
+ALIGN(RT_ALIGN_SIZE)
+static rt_uint8_t rt_thread_stack[_CPUS_NR][IDLE_THREAD_STACK_SIZE];
 
 #ifdef RT_USING_SMP
 #ifndef SYSTEM_THREAD_STACK_SIZE
 #define SYSTEM_THREAD_STACK_SIZE IDLE_THREAD_STACK_SIZE
 #endif
 static struct rt_thread rt_system_thread;
-rt_align(RT_ALIGN_SIZE)
+ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t rt_system_stack[SYSTEM_THREAD_STACK_SIZE];
 static struct rt_semaphore system_sem;
 #endif
@@ -66,7 +67,6 @@ static struct rt_semaphore system_sem;
 #endif /* RT_IDLE_HOOK_LIST_SIZE */
 
 static void (*idle_hook_list[RT_IDLE_HOOK_LIST_SIZE])(void);
-static struct rt_spinlock _hook_spinlock;
 
 /**
  * @brief This function sets a hook function to idle thread loop. When the system performs
@@ -82,10 +82,11 @@ static struct rt_spinlock _hook_spinlock;
 rt_err_t rt_thread_idle_sethook(void (*hook)(void))
 {
     rt_size_t i;
-    rt_err_t ret = -RT_EFULL;
     rt_base_t level;
+    rt_err_t ret = -RT_EFULL;
 
-    level = rt_spin_lock_irqsave(&_hook_spinlock);
+    /* disable interrupt */
+    level = rt_hw_interrupt_disable();
 
     for (i = 0; i < RT_IDLE_HOOK_LIST_SIZE; i++)
     {
@@ -96,8 +97,8 @@ rt_err_t rt_thread_idle_sethook(void (*hook)(void))
             break;
         }
     }
-
-    rt_spin_unlock_irqrestore(&_hook_spinlock, level);
+    /* enable interrupt */
+    rt_hw_interrupt_enable(level);
 
     return ret;
 }
@@ -113,10 +114,11 @@ rt_err_t rt_thread_idle_sethook(void (*hook)(void))
 rt_err_t rt_thread_idle_delhook(void (*hook)(void))
 {
     rt_size_t i;
-    rt_err_t ret = -RT_ENOSYS;
     rt_base_t level;
+    rt_err_t ret = -RT_ENOSYS;
 
-    level = rt_spin_lock_irqsave(&_hook_spinlock);
+    /* disable interrupt */
+    level = rt_hw_interrupt_disable();
 
     for (i = 0; i < RT_IDLE_HOOK_LIST_SIZE; i++)
     {
@@ -127,8 +129,8 @@ rt_err_t rt_thread_idle_delhook(void (*hook)(void))
             break;
         }
     }
-
-    rt_spin_unlock_irqrestore(&_hook_spinlock, level);
+    /* enable interrupt */
+    rt_hw_interrupt_enable(level);
 
     return ret;
 }
@@ -138,16 +140,11 @@ rt_err_t rt_thread_idle_delhook(void (*hook)(void))
 /**
  * @brief Enqueue a thread to defunct queue.
  *
- * @param thread the thread to be enqueued.
- *
  * @note It must be called between rt_hw_interrupt_disable and rt_hw_interrupt_enable
  */
 void rt_thread_defunct_enqueue(rt_thread_t thread)
 {
-    rt_base_t level;
-    level = rt_spin_lock_irqsave(&_defunct_spinlock);
-    rt_list_insert_after(&_rt_thread_defunct, &RT_THREAD_LIST_NODE(thread));
-    rt_spin_unlock_irqrestore(&_defunct_spinlock, level);
+    rt_list_insert_after(&_rt_thread_defunct, &thread->tlist);
 #ifdef RT_USING_SMP
     rt_sem_release(&system_sem);
 #endif
@@ -158,25 +155,30 @@ void rt_thread_defunct_enqueue(rt_thread_t thread)
  */
 rt_thread_t rt_thread_defunct_dequeue(void)
 {
-    rt_base_t level;
+    register rt_base_t lock;
     rt_thread_t thread = RT_NULL;
     rt_list_t *l = &_rt_thread_defunct;
 
 #ifdef RT_USING_SMP
-    level = rt_spin_lock_irqsave(&_defunct_spinlock);
+    /* disable interrupt */
+    lock = rt_hw_interrupt_disable();
     if (l->next != l)
     {
-        thread = RT_THREAD_LIST_NODE_ENTRY(l->next);
-        rt_list_remove(&RT_THREAD_LIST_NODE(thread));
+        thread = rt_list_entry(l->next,
+                struct rt_thread,
+                tlist);
+        rt_list_remove(&(thread->tlist));
     }
-    rt_spin_unlock_irqrestore(&_defunct_spinlock, level);
+    rt_hw_interrupt_enable(lock);
 #else
     if (l->next != l)
     {
-        thread = RT_THREAD_LIST_NODE_ENTRY(l->next);
-        level = rt_hw_interrupt_disable();
-        rt_list_remove(&RT_THREAD_LIST_NODE(thread));
-        rt_hw_interrupt_enable(level);
+        thread = rt_list_entry(l->next,
+                struct rt_thread,
+                tlist);
+        lock = rt_hw_interrupt_disable();
+        rt_list_remove(&(thread->tlist));
+        rt_hw_interrupt_enable(lock);
     }
 #endif
     return thread;
@@ -192,7 +194,6 @@ static void rt_defunct_execute(void)
     while (1)
     {
         rt_thread_t thread;
-        rt_bool_t object_is_systemobject;
         void (*cleanup)(struct rt_thread *tid);
 
 #ifdef RT_USING_MODULE
@@ -204,62 +205,44 @@ static void rt_defunct_execute(void)
         {
             break;
         }
-
 #ifdef RT_USING_MODULE
-        module = (struct rt_dlmodule*)thread->parent.module_id;
+        module = (struct rt_dlmodule*)thread->module_id;
         if (module)
         {
             dlmodule_destroy(module);
         }
 #endif
-
-#ifdef RT_USING_SIGNALS
-        rt_thread_free_sig(thread);
-#endif
-
-        /* store the point of "thread->cleanup" avoid to lose */
-        cleanup = thread->cleanup;
-
-        /* if it's a system object, not delete it */
-        object_is_systemobject = rt_object_is_systemobject((rt_object_t)thread);
-        if (object_is_systemobject == RT_TRUE)
-        {
-            /* detach this object */
-            rt_object_detach((rt_object_t)thread);
-        }
-
         /* invoke thread cleanup */
+        cleanup = thread->cleanup;
         if (cleanup != RT_NULL)
         {
             cleanup(thread);
         }
 
-#ifdef RT_USING_HEAP
-#ifdef RT_USING_MEM_PROTECTION
-        if (thread->mem_regions != RT_NULL)
+#ifdef RT_USING_SIGNALS
+        rt_thread_free_sig(thread);
+#endif
+
+        /* if it's a system object, not delete it */
+        if (rt_object_is_systemobject((rt_object_t)thread) == RT_TRUE)
         {
-            RT_KERNEL_FREE(thread->mem_regions);
+            /* detach this object */
+            rt_object_detach((rt_object_t)thread);
         }
-#endif
-        /* if need free, delete it */
-        if (object_is_systemobject == RT_FALSE)
+        else
         {
+#ifdef RT_USING_HEAP
             /* release thread's stack */
-#ifdef RT_USING_HW_STACK_GUARD
-            RT_KERNEL_FREE(thread->stack_buf);
-#else
             RT_KERNEL_FREE(thread->stack_addr);
-#endif
             /* delete thread object */
             rt_object_delete((rt_object_t)thread);
-        }
 #endif
+        }
     }
 }
 
-static void idle_thread_entry(void *parameter)
+static void rt_thread_idle_entry(void *parameter)
 {
-    RT_UNUSED(parameter);
 #ifdef RT_USING_SMP
     if (rt_hw_cpu_id() != 0)
     {
@@ -300,16 +283,9 @@ static void idle_thread_entry(void *parameter)
 #ifdef RT_USING_SMP
 static void rt_thread_system_entry(void *parameter)
 {
-    RT_UNUSED(parameter);
-
     while (1)
     {
-        int ret = rt_sem_take(&system_sem, RT_WAITING_FOREVER);
-        if (ret != RT_EOK)
-        {
-            rt_kprintf("failed to sem_take() error %d\n", ret);
-            RT_ASSERT(0);
-        }
+        rt_sem_take(&system_sem, RT_WAITING_FOREVER);
         rt_defunct_execute();
     }
 }
@@ -323,43 +299,30 @@ static void rt_thread_system_entry(void *parameter)
 void rt_thread_idle_init(void)
 {
     rt_ubase_t i;
-#if RT_NAME_MAX > 0
-    char idle_thread_name[RT_NAME_MAX];
-#endif /* RT_NAME_MAX > 0 */
+    char tidle_name[RT_NAME_MAX];
 
     for (i = 0; i < _CPUS_NR; i++)
     {
-#if RT_NAME_MAX > 0
-        rt_snprintf(idle_thread_name, RT_NAME_MAX, "tidle%d", i);
-#endif /* RT_NAME_MAX > 0 */
-        rt_thread_init(&idle_thread[i],
-#if RT_NAME_MAX > 0
-                idle_thread_name,
-#else
-                "tidle",
-#endif /* RT_NAME_MAX > 0 */
-                idle_thread_entry,
+        rt_sprintf(tidle_name, "tidle%d", i);
+        rt_thread_init(&idle[i],
+                tidle_name,
+                rt_thread_idle_entry,
                 RT_NULL,
-                &idle_thread_stack[i][0],
-                sizeof(idle_thread_stack[i]),
+                &rt_thread_stack[i][0],
+                sizeof(rt_thread_stack[i]),
                 RT_THREAD_PRIORITY_MAX - 1,
                 32);
 #ifdef RT_USING_SMP
-        rt_thread_control(&idle_thread[i], RT_THREAD_CTRL_BIND_CPU, (void*)i);
-
-        rt_cpu_index(i)->idle_thread = &idle_thread[i];
+        rt_thread_control(&idle[i], RT_THREAD_CTRL_BIND_CPU, (void*)i);
 #endif /* RT_USING_SMP */
         /* startup */
-        rt_thread_startup(&idle_thread[i]);
+        rt_thread_startup(&idle[i]);
     }
 
 #ifdef RT_USING_SMP
     RT_ASSERT(RT_THREAD_PRIORITY_MAX > 2);
 
-    rt_spin_lock_init(&_defunct_spinlock);
-    rt_spin_lock_init(&_hook_spinlock);
-
-    rt_sem_init(&system_sem, "defunct", 0, RT_IPC_FLAG_FIFO);
+    rt_sem_init(&system_sem, "defunct", 1, RT_IPC_FLAG_FIFO);
 
     /* create defunct thread */
     rt_thread_init(&rt_system_thread,
@@ -381,10 +344,10 @@ void rt_thread_idle_init(void)
 rt_thread_t rt_thread_idle_gethandler(void)
 {
 #ifdef RT_USING_SMP
-    int id = rt_hw_cpu_id();
+    register int id = rt_hw_cpu_id();
 #else
-    int id = 0;
+    register int id = 0;
 #endif /* RT_USING_SMP */
 
-    return (rt_thread_t)(&idle_thread[id]);
+    return (rt_thread_t)(&idle[id]);
 }

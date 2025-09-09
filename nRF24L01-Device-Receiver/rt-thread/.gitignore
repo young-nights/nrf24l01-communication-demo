@@ -13,8 +13,6 @@
 *.crf
 build
 Debug
-rtthread
-settings
 documentation/html
 *~
 *.o
@@ -25,14 +23,10 @@ documentation/html
 *.a
 *.i
 *.d
-*.dfinish
-*.su
-#source insight 4 project files
-*.si4project
 tools/kconfig-frontends/kconfig-mconf
 packages
 dist
-rt-studio-project
+dist_ide_project
 cconfig.h
 GPUCache
 
@@ -45,9 +39,6 @@ tags
 
 .idea
 .vscode
-*.code-workspace
-*.eide.*
 .history
 CMakeLists.txt
 cmake-build-debug
-*.mk

@@ -23,7 +23,7 @@ int nRF24L01_Param_Config(nrf24_param_t param)
 
     /* CONFIG */
     param->config.prim_rx       = ROLE_PTX;
-    param->config.pwr_up        = 0;
+    param->config.pwr_up        = 1;
     param->config.crco          = CRC_2_BYTE;
     param->config.en_crc        = 1;
     param->config.mask_max_rt   = 0;
@@ -33,10 +33,10 @@ int nRF24L01_Param_Config(nrf24_param_t param)
     /* EN_AA */
     param->en_aa.p0 = 1;
     param->en_aa.p1 = 1;
-    param->en_aa.p2 = 1;
-    param->en_aa.p3 = 1;
-    param->en_aa.p4 = 1;
-    param->en_aa.p5 = 1;
+    param->en_aa.p2 = 0;
+    param->en_aa.p3 = 0;
+    param->en_aa.p4 = 0;
+    param->en_aa.p5 = 0;
 
     /* EN_RXADDR */
     param->en_rxaddr.p0 = RT_TRUE;
@@ -60,7 +60,7 @@ int nRF24L01_Param_Config(nrf24_param_t param)
     param->rf_setup.rf_pwr      = RF_POWER_0dBm;
     param->rf_setup.rf_dr_high  = 0;
     param->rf_setup.pll_lock    = 0;
-    param->rf_setup.rf_dr_low   = 1;
+    param->rf_setup.rf_dr_low   = 0;
     param->rf_setup.cont_wave   = 0;
 
     /* DYNPD */

@@ -25,6 +25,9 @@ rt_sem_t nrf24_irq_sem = RT_NULL;
 void nRF24L01_Thread_entry(void* parameter)
 {
 
+    int cnt = 0;
+    char buf[32];
+
     /* 0. 给nrf24开创一个实际空间 */
     nrf24_t nrf24 = malloc(sizeof(nrf24_t));
     if (nrf24 == NULL) {
@@ -129,16 +132,19 @@ void nRF24L01_Thread_entry(void* parameter)
     LOG_I("LOG:%d. Successfully initialized",Record.ulog_cnt++);
     rt_kprintf("\r\n\r\n");
     rt_kprintf("----------------------------------\r\n");
-    rt_kprintf("[nrf24/demo] running.\r\n");
+    rt_kprintf("[nrf24/demo] running transmitter.\r\n");
 
 
-    nRF24L01_Send_Packet(nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE);
+//    nRF24L01_Send_Packet(nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE);
 
     for(;;)
     {
+        rt_sprintf(buf, "TX:%d\r\n", cnt++);
+        nRF24L01_Send_Packet(nrf24, (uint8_t *)buf, rt_strlen(buf), NRF24_DEFAULT_PIPE);
+
         nRF24L01_Run(nrf24);
 
-        rt_thread_mdelay(50);
+        rt_thread_mdelay(500);
     }
 }
 

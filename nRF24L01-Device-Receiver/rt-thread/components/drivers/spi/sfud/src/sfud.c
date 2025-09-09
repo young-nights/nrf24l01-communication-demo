@@ -72,7 +72,7 @@ static sfud_err reset(const sfud_flash *flash);
 static sfud_err read_jedec_id(sfud_flash *flash);
 static sfud_err set_write_enabled(const sfud_flash *flash, bool enabled);
 static sfud_err set_4_byte_address_mode(sfud_flash *flash, bool enabled);
-static void make_address_byte_array(const sfud_flash *flash, uint32_t addr, uint8_t *array);
+static void make_adress_byte_array(const sfud_flash *flash, uint32_t addr, uint8_t *array);
 
 /* ../port/sfup_port.c */
 extern void sfud_log_debug(const char *file, const long line, const char *format, ...);
@@ -95,10 +95,10 @@ sfud_err sfud_device_init(sfud_flash *flash) {
     }
     if (result == SFUD_SUCCESS) {
         flash->init_ok = true;
-        SFUD_INFO("%s flash device initialized successfully.", flash->name);
+        SFUD_INFO("%s flash device is initialize success.", flash->name);
     } else {
         flash->init_ok = false;
-        SFUD_INFO("Error: %s flash device initialization failed.", flash->name);
+        SFUD_INFO("Error: %s flash device is initialize fail.", flash->name);
     }
 
     return result;
@@ -170,12 +170,7 @@ static void qspi_set_read_cmd_format(sfud_flash *flash, uint8_t ins, uint8_t ins
         flash->read_cmd_format.instruction = ins;
         flash->read_cmd_format.address_size = 24;
     } else {
-        if(ins == SFUD_CMD_READ_DATA){
-            flash->read_cmd_format.instruction = ins + 0x10;
-        }
-        else{
-            flash->read_cmd_format.instruction = ins + 1;
-        }
+        flash->read_cmd_format.instruction = ins + 1;
         flash->read_cmd_format.address_size = 32;
     }
 
@@ -325,7 +320,7 @@ static sfud_err hardware_init(sfud_flash *flash) {
 
     if (flash->chip.capacity == 0 || flash->chip.write_mode == 0 || flash->chip.erase_gran == 0
             || flash->chip.erase_gran_cmd == 0) {
-        SFUD_INFO("Warning: This flash device is not found or not supported.");
+        SFUD_INFO("Warning: This flash device is not found or not support.");
         return SFUD_ERR_NOT_FOUND;
     } else {
         const char *flash_mf_name = NULL;
@@ -338,12 +333,12 @@ static sfud_err hardware_init(sfud_flash *flash) {
         }
         /* print manufacturer and flash chip name */
         if (flash_mf_name && flash->chip.name) {
-            SFUD_INFO("Found a %s %s flash chip. Size is %ld bytes.", flash_mf_name, flash->chip.name,
+            SFUD_INFO("Find a %s %s flash chip. Size is %ld bytes.", flash_mf_name, flash->chip.name,
                     flash->chip.capacity);
         } else if (flash_mf_name) {
-            SFUD_INFO("Found a %s flash chip. Size is %ld bytes.", flash_mf_name, flash->chip.capacity);
+            SFUD_INFO("Find a %s flash chip. Size is %ld bytes.", flash_mf_name, flash->chip.capacity);
         } else {
-            SFUD_INFO("Found a flash chip. Size is %ld bytes.", flash->chip.capacity);
+            SFUD_INFO("Find a flash chip. Size is %ld bytes.", flash->chip.capacity);
         }
     }
 
@@ -353,17 +348,13 @@ static sfud_err hardware_init(sfud_flash *flash) {
         return result;
     }
 
-    /* The flash all blocks is protected,so need change the flash status to unprotected before write and erase operate. */
+    /* I found when the flash write mode is supported AAI mode. The flash all blocks is protected,
+     * so need change the flash status to unprotected before write and erase operate. */
     if (flash->chip.write_mode & SFUD_WM_AAI) {
         result = sfud_write_status(flash, true, 0x00);
-    } else {
-        /* MX25L3206E */
-        if ((0xC2 == flash->chip.mf_id) && (0x20 == flash->chip.type_id) && (0x16 == flash->chip.capacity_id)) {
-            result = sfud_write_status(flash, false, 0x00);
+        if (result != SFUD_SUCCESS) {
+            return result;
         }
-    }
-    if (result != SFUD_SUCCESS) {
-        return result;
     }
 
     /* if the flash is large than 16MB (256Mb) then enter in 4-Byte addressing mode */
@@ -430,7 +421,7 @@ sfud_err sfud_read(const sfud_flash *flash, uint32_t addr, size_t size, uint8_t 
 #endif
         {
             cmd_data[0] = SFUD_CMD_READ_DATA;
-            make_address_byte_array(flash, addr, &cmd_data[1]);
+            make_adress_byte_array(flash, addr, &cmd_data[1]);
             cmd_size = flash->addr_in_4_byte ? 5 : 4;
             result = spi->wr(spi, cmd_data, cmd_size, data, size);
         }
@@ -557,7 +548,7 @@ sfud_err sfud_erase(const sfud_flash *flash, uint32_t addr, size_t size) {
         }
 
         cmd_data[0] = cur_erase_cmd;
-        make_address_byte_array(flash, addr, &cmd_data[1]);
+        make_adress_byte_array(flash, addr, &cmd_data[1]);
         cmd_size = flash->addr_in_4_byte ? 5 : 4;
         result = spi->wr(spi, cmd_data, cmd_size, NULL, 0);
         if (result != SFUD_SUCCESS) {
@@ -639,7 +630,7 @@ static sfud_err page256_or_1_byte_write(const sfud_flash *flash, uint32_t addr, 
             goto __exit;
         }
         cmd_data[0] = SFUD_CMD_PAGE_PROGRAM;
-        make_address_byte_array(flash, addr, &cmd_data[1]);
+        make_adress_byte_array(flash, addr, &cmd_data[1]);
         cmd_size = flash->addr_in_4_byte ? 5 : 4;
 
         /* make write align and calculate next write address */
@@ -731,7 +722,7 @@ static sfud_err aai_write(const sfud_flash *flash, uint32_t addr, size_t size, c
     cmd_data[0] = SFUD_CMD_AAI_WORD_PROGRAM;
     while (size >= 2) {
         if (first_write) {
-            make_address_byte_array(flash, addr, &cmd_data[1]);
+            make_adress_byte_array(flash, addr, &cmd_data[1]);
             cmd_size = flash->addr_in_4_byte ? 5 : 4;
             cmd_data[cmd_size] = *data;
             cmd_data[cmd_size + 1] = *(data + 1);
@@ -995,7 +986,7 @@ static sfud_err wait_busy(const sfud_flash *flash) {
     return result;
 }
 
-static void make_address_byte_array(const sfud_flash *flash, uint32_t addr, uint8_t *array) {
+static void make_adress_byte_array(const sfud_flash *flash, uint32_t addr, uint8_t *array) {
     uint8_t len, i;
 
     SFUD_ASSERT(flash);

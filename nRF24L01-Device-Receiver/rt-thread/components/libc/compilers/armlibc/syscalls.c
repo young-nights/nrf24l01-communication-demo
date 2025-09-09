@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2022, RT-Thread Development Team
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,18 +23,17 @@
 #include <sys/stat.h>
 #include <compiler_private.h>
 #ifdef RT_USING_POSIX_STDIO
-#include <posix/stdio.h>
+#include "libc.h"
 #endif /* RT_USING_POSIX_STDIO */
-#include <posix/stdlib.h>
 
 #define DBG_TAG    "armlibc.syscalls"
 #define DBG_LVL    DBG_INFO
 #include <rtdbg.h>
 
 #ifdef __clang__
-    __asm(".global __use_no_semihosting\n\t");
+__asm(".global __use_no_semihosting\n\t");
 #else
-    #pragma import(__use_no_semihosting_swi)
+#pragma import(__use_no_semihosting_swi)
 #endif
 
 /* Standard IO device handles. */
@@ -72,7 +71,7 @@ FILEHANDLE _sys_open(const char *name, int openmode)
 
 #ifndef DFS_USING_POSIX
     LOG_W("%s: %s", __func__, _WARNING_WITHOUT_FS);
-    return -1; /* error */
+    return 0; /* error */
 #else
     /* Correct openmode from fopen to open */
     if (openmode & OPEN_PLUS)
@@ -102,7 +101,7 @@ FILEHANDLE _sys_open(const char *name, int openmode)
 
     fd = open(name, mode, 0);
     if (fd < 0)
-        return -1; /* error */
+        return 0; /* error */
     else
         return fd;
 #endif /* DFS_USING_POSIX */
@@ -117,7 +116,7 @@ int _sys_close(FILEHANDLE fh)
     return close(fh);
 #else
     LOG_W("%s: %s", __func__, _WARNING_WITHOUT_FS);
-    return 0; /* error */
+    return 0;
 #endif /* DFS_USING_POSIX */
 }
 
@@ -154,7 +153,7 @@ int _sys_read(FILEHANDLE fh, unsigned char *buf, unsigned len, int mode)
     if (fh == STDIN)
     {
 #ifdef RT_USING_POSIX_STDIO
-        if (rt_posix_stdio_get_console() < 0)
+        if (libc_stdio_get_console() < 0)
         {
             LOG_W("Do not invoke standard output before initializing Compiler");
             return 0; /* error, but keep going */
@@ -227,11 +226,6 @@ int _sys_write(FILEHANDLE fh, const unsigned char *buf, unsigned len, int mode)
         size = write(fh, buf, len);
         if (size >= 0)
         {
-            /*
-            fflush doesn't have a good solution in Keil-MDK,
-            so it has to sync/flush when for each writen.
-            */
-            fsync(fh);
             return len - size; /* success */
         }
         else
@@ -243,23 +237,6 @@ int _sys_write(FILEHANDLE fh, const unsigned char *buf, unsigned len, int mode)
         return 0; /* error */
 #endif /* DFS_USING_POSIX */
     }
-}
-
-/*
- * Flush any OS buffers associated with fh, ensuring that the file
- * is up to date on disk. Result is >=0 if OK, negative for an
- * error.
- * This function is deprecated. It is never called by any other library function,
- * and you are not required to re-implement it if you are retargeting standard I/O (stdio).
- */
-int _sys_ensure(FILEHANDLE fh)
-{
-#ifdef DFS_USING_POSIX
-    return fsync(fh);
-#else
-    LOG_W("%s: %s", __func__, _WARNING_WITHOUT_FS);
-    return 0; /* error */
-#endif /* DFS_USING_POSIX */
 }
 
 /*
@@ -283,18 +260,11 @@ int _sys_seek(FILEHANDLE fh, long pos)
 /**
  * used by tmpnam() or tmpfile()
  */
-#if __ARMCC_VERSION >= 6190000
-void _sys_tmpnam(char *name, int fileno, unsigned maxlength)
-{
-    rt_snprintf(name, maxlength, "tem%03d", fileno);
-}
-#else
 int _sys_tmpnam(char *name, int fileno, unsigned maxlength)
 {
     rt_snprintf(name, maxlength, "tem%03d", fileno);
     return 1;
 }
-#endif /* __ARMCC_VERSION >= 6190000 */
 
 char *_sys_command_string(char *cmd, int len)
 {
@@ -311,10 +281,11 @@ void _ttywrch(int ch)
 }
 
 /* for exit() and abort() */
-rt_weak void _sys_exit(int return_code)
+RT_WEAK void _sys_exit(int return_code)
 {
+    extern void __rt_libc_exit(int status);
     __rt_libc_exit(return_code);
-    while (1);
+    while(1);
 }
 
 /**
@@ -341,7 +312,7 @@ long _sys_flen(FILEHANDLE fh)
 
 int _sys_istty(FILEHANDLE fh)
 {
-    if ((STDIN <= fh) && (fh <= STDERR))
+    if((STDIN <= fh) && (fh <= STDERR))
         return 1;
     else
         return 0;
@@ -375,13 +346,13 @@ int fgetc(FILE *f)
 #ifdef RT_USING_POSIX_STDIO
     char ch;
 
-    if (rt_posix_stdio_get_console() < 0)
+    if (libc_stdio_get_console() < 0)
     {
         LOG_W("Do not invoke standard output before initializing Compiler");
         return 0;
     }
 
-    if (read(STDIN_FILENO, &ch, 1) == 1)
+    if(read(STDIN_FILENO, &ch, 1) == 1)
         return ch;
 #endif /* RT_USING_POSIX_STDIO */
     LOG_W("%s: %s", __func__, _WARNING_WITHOUT_STDIO);

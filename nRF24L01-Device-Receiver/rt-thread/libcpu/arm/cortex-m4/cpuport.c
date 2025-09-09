@@ -15,7 +15,6 @@
  * 2013-06-23     aozima       support lazy stack optimized.
  * 2018-07-24     aozima       enhancement hard fault exception handler.
  * 2019-07-03     yangjie      add __rt_ffs() for armclang.
- * 2022-06-12     jonas        fixed __rt_ffs() for armclang.
  */
 
 #include <rtthread.h>
@@ -405,7 +404,7 @@ void rt_hw_hard_fault_exception(struct exception_info *exception_info)
 
     if (exception_info->exc_return & (1 << 2))
     {
-        rt_kprintf("hard fault on thread: %s\r\n\r\n", rt_thread_self()->parent.name);
+        rt_kprintf("hard fault on thread: %s\r\n\r\n", rt_thread_self()->name);
 
 #if defined(RT_USING_FINSH) && defined(MSH_USING_BUILT_IN_COMMANDS)
         list_thread();
@@ -429,9 +428,19 @@ void rt_hw_hard_fault_exception(struct exception_info *exception_info)
 }
 
 /**
+ * shutdown CPU
+ */
+RT_WEAK void rt_hw_cpu_shutdown(void)
+{
+    rt_kprintf("shutdown...\n");
+
+    RT_ASSERT(0);
+}
+
+/**
  * reset CPU
  */
-void rt_hw_cpu_reset(void)
+RT_WEAK void rt_hw_cpu_reset(void)
 {
     SCB_AIRCR = SCB_RESET_VALUE;
 }
@@ -464,12 +473,12 @@ exit
 int __rt_ffs(int value)
 {
     __asm volatile(
-        "CMP     %1, #0x00            \n"
+        "CMP     r0, #0x00            \n"
         "BEQ     1f                   \n"
 
-        "RBIT    %1, %1               \n"
-        "CLZ     %0, %1               \n"
-        "ADDS    %0, %0, #0x01        \n"
+        "RBIT    r0, r0               \n"
+        "CLZ     r0, r0               \n"
+        "ADDS    r0, r0, #0x01        \n"
 
         "1:                           \n"
 

@@ -20,7 +20,7 @@
 #include <rtdbg.h>
 #include <drv_spi.h>
 #include "main.h"
-
+#include "bsp_typedef.h"
 
 
 

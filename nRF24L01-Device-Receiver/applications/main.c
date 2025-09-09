@@ -5,11 +5,15 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2025-09-07     RT-Thread    first version
+ * 2025-09-03     RT-Thread    first version
  */
 
 #include <rtthread.h>
+#include "bsp_nrf24l01_spi.h"
+#include <rtdbg.h>
 #include "bsp_sys.h"
+#include "bsp_nrf24l01_driver.h"
+
 
 
 /**
@@ -41,8 +45,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_SPI2_Init();
   MX_USART1_UART_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

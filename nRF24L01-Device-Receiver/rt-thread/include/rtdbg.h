@@ -36,21 +36,14 @@
 extern "C" {
 #endif
 
-/* the debug log will force enable when RT_USING_DEBUG macro is defined */
-#if defined(RT_USING_DEBUG) && !defined(DBG_ENABLE)
+/* the debug log will force enable when RT_DEBUG macro is defined */
+#if defined(RT_DEBUG) && !defined(DBG_ENABLE)
 #define DBG_ENABLE
 #endif
 
-/* it will force output color log when RT_DEBUGING_COLOR macro is defined */
-#if defined(RT_DEBUGING_COLOR) && !defined(DBG_COLOR)
+/* it will force output color log when RT_DEBUG_COLOR macro is defined */
+#if defined(RT_DEBUG_COLOR) && !defined(DBG_COLOR)
 #define DBG_COLOR
-#endif
-
-/* for dlog */
-#ifdef PKG_USING_DLOG
-#include <dlog.h>
-#else
-#define DLOG(...)
 #endif
 
 #if defined(RT_USING_ULOG)
@@ -84,7 +77,7 @@ extern "C" {
 #else
 /* compatible with old version */
 #ifndef DBG_LEVEL
-#define DBG_LEVEL         DBG_WARNING
+#define DBG_LEVEL         DBG_LOG
 #endif
 #endif /* DBG_LVL */
 

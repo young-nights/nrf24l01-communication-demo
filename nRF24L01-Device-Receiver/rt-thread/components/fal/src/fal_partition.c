@@ -34,8 +34,21 @@ struct part_flash_info
 #error "You must defined FAL_PART_TABLE on 'fal_cfg.h'"
 #endif
 
+#ifdef __CC_ARM                        /* ARM Compiler */
+    #define SECTION(x)                 __attribute__((section(x)))
+    #define USED                       __attribute__((used))
+#elif defined (__IAR_SYSTEMS_ICC__)    /* for IAR Compiler */
+    #define SECTION(x)                 @ x
+    #define USED                       __root
+#elif defined (__GNUC__)               /* GNU GCC Compiler */
+    #define SECTION(x)                 __attribute__((section(x)))
+    #define USED                       __attribute__((used))
+#else
+    #error not supported tool chain
+#endif /* __CC_ARM */
+
 /* partition table definition */
-static const struct fal_partition partition_table_def[] = FAL_PART_TABLE;
+USED static const struct fal_partition partition_table_def[] SECTION("FalPartTable") = FAL_PART_TABLE;
 static const struct fal_partition *partition_table = NULL;
 /* partition and flash object information cache table */
 static struct part_flash_info part_flash_cache[sizeof(partition_table_def) / sizeof(partition_table_def[0])] = { 0 };
@@ -321,8 +334,7 @@ _exit:
  */
 const struct fal_partition *fal_partition_find(const char *name)
 {
-    if (!init_ok)
-        return NULL;
+    assert(init_ok);
 
     size_t i;
 
@@ -354,10 +366,8 @@ static const struct fal_flash_dev *flash_device_find_by_part(const struct fal_pa
  */
 const struct fal_partition *fal_get_partition_table(size_t *len)
 {
+    assert(init_ok);
     assert(len);
-
-    if (!init_ok)
-        return NULL;
 
     *len = partition_table_len;
 
@@ -373,13 +383,8 @@ const struct fal_partition *fal_get_partition_table(size_t *len)
  */
 void fal_set_partition_table_temp(struct fal_partition *table, size_t len)
 {
+    assert(init_ok);
     assert(table);
-
-    if (!init_ok)
-    {
-        log_e("FAL NOT initialized");
-        return;
-    }
 
     check_and_update_part_cache(table, len);
 
@@ -408,7 +413,7 @@ int fal_partition_read(const struct fal_partition *part, uint32_t addr, uint8_t 
 
     if (addr + size > part->len)
     {
-        log_e("Partition read error! Partition(%s) address(0x%08x) out of bound(0x%08x).", part->name, addr + size, part->len);
+        log_e("Partition read error! Partition address out of bound.");
         return -1;
     }
 

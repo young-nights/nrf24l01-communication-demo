@@ -1,14 +1,17 @@
 /*
- * Copyright (c) 2006-2022, RT-Thread Development Team
+ * File      : cpuport.c
+ * This file is part of RT-Thread RTOS
+ * COPYRIGHT (C) 2009 - 2011, RT-Thread Development Team
  *
- * SPDX-License-Identifier: Apache-2.0
+ * The license and distribution terms for this file may be
+ * found in the file LICENSE in this distribution or at
+ * http://www.rt-thread.org/license/LICENSE
  *
  * Change Logs:
  * Date           Author       Notes
  * 2011-02-23     Bernard      the first version
  * 2012-03-03     xuzhenglim   modify for rx62N
  */
-
 #include <rthw.h>
 #include <rtthread.h>
 
@@ -126,7 +129,7 @@ void rt_hw_hard_fault_exception(struct stack_frame* exception_contex)
         rt_kprintf("acchi: 0x%08x\n", exception_contex->ACCHI);
         rt_kprintf("acclo: 0x%08x\n", exception_contex->ACCLO);
     }
-        rt_kprintf("hard fault on thread: %s\n", rt_current_thread->parent.name);
+        rt_kprintf("hard fault on thread: %s\n", rt_current_thread->name);
     #if defined(RT_USING_FINSH) && defined(MSH_USING_BUILT_IN_COMMANDS)
         list_thread();
     #endif
@@ -174,6 +177,17 @@ void rt_hw_context_switch_interrupt(rt_uint32_t from, rt_uint32_t to)
     ENTER_INTERRUPT();
 }
 
+/**
+ * shut down the chip
+ *
+ * @author LXZ (2014/11/8)
+ */
+RT_WEAK void rt_hw_cpu_shutdown(void)
+{
+    rt_kprintf("shutdown...\n");
+
+    RT_ASSERT(0);
+}
 /**
  * switch to the first thread,it just call one time
  *
