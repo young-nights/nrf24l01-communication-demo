@@ -55,7 +55,7 @@ void nRF24L01_Thread_entry(void* parameter)
 
 
     /* 2. 获取中断引脚编号 */
-    nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 5);
+    nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 7);
 
 
     /* 3. 初始化SPI */
