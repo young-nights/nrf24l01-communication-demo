@@ -617,7 +617,14 @@ int nRF24L01_Run(nrf24_t nrf24)
 
     // 1. 如果使用IRQ中断，则获取信号量等待释放
     if(nrf24->nrf24_flags.using_irq == RT_TRUE){
-        rt_sem_take(nrf24_irq_sem, RT_WAITING_FOREVER);
+        /* 获取信号量：nrf24_irq_sem -> 0:阻塞 1：正常运行 */
+        rt_err_t result = rt_sem_take(nrf24_irq_sem, RT_WAITING_FOREVER);
+        if(result != RT_EOK){
+            LOG_E("thread2 take a dynamic semaphore, failed.\n");
+        }
+        else{
+            LOG_I("thread2 take a dynamic semaphore, succeed.\n");
+        }
     }
 
     // 2. 读取status状态标志，并清除中断触发标志位
@@ -626,6 +633,15 @@ int nRF24L01_Run(nrf24_t nrf24)
 
      // 3. 分析哪条信道接收的数据
      uint8_t pipe = (nrf24->nrf24_flags.status & NRF24BITMASK_RX_P_NO) >> 1;
+     if(pipe == 0x07){
+         LOG_I("RX FIFO Empty.\n");
+     }
+     else if(pipe == 0x06){
+         LOG_I("Not used.\n");
+     }
+     else{
+         LOG_I("Data pipe number(%pd).\n",pipe);
+     }
 
      // 4. 角色 = 发送端（PTX）
      if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PTX)

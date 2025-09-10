@@ -209,10 +209,7 @@ static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
 static void nrf24l01_rx_ind(nrf24_t nrf24, uint8_t *data, uint8_t len, int pipe)
 {
     rt_kprintf("(p%d): ", pipe);
-    /* 按十六进制打印，避免越界和乱码 */
-    for (uint8_t i = 0; i < len; ++i)
-        rt_kprintf("%02X ", data[i]);
-    rt_kprintf("\n");
+    rt_kprintf((char *)data);
 }
 
 

@@ -25,9 +25,6 @@ rt_sem_t nrf24_irq_sem = RT_NULL;
 void nRF24L01_Thread_entry(void* parameter)
 {
 
-    int cnt = 0;
-    char buf[32];
-
     /* 0. 给nrf24开创一个实际空间 */
     nrf24_t nrf24 = malloc(sizeof(nrf24_t));
     if (nrf24 == NULL) {
@@ -58,7 +55,7 @@ void nRF24L01_Thread_entry(void* parameter)
 
 
     /* 2. 获取中断引脚编号 */
-    nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 5);
+    nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 7);
 
 
     /* 3. 初始化SPI */
@@ -96,8 +93,8 @@ void nRF24L01_Thread_entry(void* parameter)
 
 
     /* 8. 先进入掉电模式 */
-    nRF24L01_Enter_Power_Down_Mode(nrf24);
     nrf24->nrf24_ops.nrf24_reset_ce();
+    nRF24L01_Enter_Power_Down_Mode(nrf24);
 
     /* 9. 解锁高级扩展功能 */
     nRF24L01_Ensure_RWW_Features_Activated(nrf24);
@@ -127,21 +124,23 @@ void nRF24L01_Thread_entry(void* parameter)
     nRF24L01_Clear_Observe_TX(nrf24);
     /* 15. 配置完成，进入上电模式 */
     nRF24L01_Enter_Power_Up_Mode(nrf24);
-
     nrf24->nrf24_ops.nrf24_set_ce();
     LOG_I("LOG:%d. Successfully initialized",Record.ulog_cnt++);
     rt_kprintf("\r\n\r\n");
     rt_kprintf("----------------------------------\r\n");
     rt_kprintf("[nrf24/demo] running transmitter.\r\n");
 
+    nrf24->nrf24_ops.nrf24_reset_ce();
+    nRF24L01_Enter_Power_Down_Mode(nrf24);
+    rt_uint8_t addr_buf1[5] = { 1,2,3,4,5 };
+    NRF24L01_Set_TxAddr(nrf24, addr_buf1, 5);
+    nrf24->nrf24_ops.nrf24_set_ce();
+    nRF24L01_Enter_Power_Up_Mode(nrf24);
 
-//    nRF24L01_Send_Packet(nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE);
+    nRF24L01_Send_Packet(nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE);
 
     for(;;)
     {
-        rt_sprintf(buf, "TX:%d\r\n", cnt++);
-        nRF24L01_Send_Packet(nrf24, (uint8_t *)buf, rt_strlen(buf), NRF24_DEFAULT_PIPE);
-
         nRF24L01_Run(nrf24);
 
         rt_thread_mdelay(500);
