@@ -640,7 +640,7 @@ int nRF24L01_Run(nrf24_t nrf24)
          LOG_I("Not used.\n");
      }
      else{
-         LOG_I("Data pipe number(%pd).\n",pipe);
+         LOG_I("Data pipe number(p%d).\n",pipe);
      }
 
      // 4. 角色 = 发送端（PTX）
@@ -690,12 +690,12 @@ int nRF24L01_Run(nrf24_t nrf24)
              }
              ret_flag |= 2;
 
-             if(rt_sem_trytake(nrf24_send_sem) ==  RT_EOK){
-                 if(nrf24->nrf24_cb.nrf24l01_tx_done){
-                     nrf24->nrf24_cb.nrf24l01_tx_done(nrf24,pipe);
-                 }
-                 ret_flag |= 1;
-             }
+//             if(rt_sem_trytake(nrf24_send_sem) ==  RT_EOK){
+//                 if(nrf24->nrf24_cb.nrf24l01_tx_done){
+//                     nrf24->nrf24_cb.nrf24l01_tx_done(nrf24,pipe);
+//                 }
+//                 ret_flag |= 1;
+//             }
 
          }
      }

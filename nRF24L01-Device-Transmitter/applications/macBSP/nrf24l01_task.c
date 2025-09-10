@@ -130,12 +130,6 @@ void nRF24L01_Thread_entry(void* parameter)
     rt_kprintf("----------------------------------\r\n");
     rt_kprintf("[nrf24/demo] running transmitter.\r\n");
 
-    nrf24->nrf24_ops.nrf24_reset_ce();
-    nRF24L01_Enter_Power_Down_Mode(nrf24);
-    rt_uint8_t addr_buf1[5] = { 1,2,3,4,5 };
-    NRF24L01_Set_TxAddr(nrf24, addr_buf1, 5);
-    nrf24->nrf24_ops.nrf24_set_ce();
-    nRF24L01_Enter_Power_Up_Mode(nrf24);
 
     nRF24L01_Send_Packet(nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE);
 
