@@ -1,0 +1,44 @@
+<mxfile host="65bd71144e">
+    <diagram id="oQSVO85qt6wngumRS3t9" name="第 1 页">
+        <mxGraphModel dx="1386" dy="779" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="16" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;elbow=vertical;" parent="1" source="2" target="4" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="230" y="165"/>
+                            <mxPoint x="230" y="505"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="19" value="回传数据，可ACK" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="16" vertex="1" connectable="0">
+                    <mxGeometry x="0.077" y="1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="Transmitter" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="304" y="140" width="110" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="Receiver" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="292.5" y="480" width="110" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="tx_addr：00&amp;nbsp; 01 02 03 04&lt;br&gt;rx_addr_p0：根据接收方动态调整&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;（默认：&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;00&amp;nbsp; 01 02 03 04&lt;/span&gt;）&lt;/span&gt;&lt;div&gt;tx_addr_p1：&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 05&lt;/span&gt;&lt;/div&gt;&lt;div&gt;tx_addr_p2：&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 02&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(63, 63, 63);&quot;&gt;tx_addr_p3：&lt;/span&gt;&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 03&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); background-color: transparent;&quot;&gt;&lt;span style=&quot;color: rgb(63, 63, 63);&quot;&gt;tx_addr_p4：&lt;/span&gt;&lt;/span&gt;&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 04&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;&lt;span style=&quot;scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); background-color: transparent; color: rgb(0, 0, 0);&quot;&gt;&lt;span style=&quot;scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); color: rgb(63, 63, 63);&quot;&gt;tx_addr_p4：&lt;/span&gt;&lt;/span&gt;&lt;span style=&quot;scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); background-color: transparent; color: rgb(0, 0, 0);&quot;&gt;01&amp;nbsp; 02 03 04 05&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="287.5" y="530" width="350" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="" style="endArrow=classic;startArrow=classic;html=1;elbow=vertical;curved=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.433;entryY=1.056;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="344.5" y="440" as="sourcePoint"/>
+                        <mxPoint x="344.5" y="370" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="40" value="比方说，主动发送数据到Transmitter设备，接收到数据后Transmitter返回ACK，&lt;div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: rgb(63, 63, 63);&quot;&gt;&lt;b&gt;此时，Receiver会接收到ACK数据和一开始发送的&quot;Hi&quot;数据&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=#b85450;fillColor=#f8cecc;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="660" width="440" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="tx_addr：00&amp;nbsp; 01 02 03 04&lt;br&gt;rx_addr_p0：根据接收方动态调整&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;（默认：&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;00&amp;nbsp; 01 02 03 04&lt;/span&gt;）&lt;/span&gt;&lt;div&gt;tx_addr_p1：&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 05&lt;/span&gt;&lt;/div&gt;&lt;div&gt;tx_addr_p2：&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 02&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(63, 63, 63);&quot;&gt;tx_addr_p3：&lt;/span&gt;&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 03&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); background-color: transparent;&quot;&gt;&lt;span style=&quot;color: rgb(63, 63, 63);&quot;&gt;tx_addr_p4：&lt;/span&gt;&lt;/span&gt;&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;01&amp;nbsp; 02 03 04 04&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0); background-color: transparent;&quot;&gt;&lt;span style=&quot;scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); background-color: transparent; color: rgb(0, 0, 0);&quot;&gt;&lt;span style=&quot;scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); color: rgb(63, 63, 63);&quot;&gt;tx_addr_p4：&lt;/span&gt;&lt;/span&gt;&lt;span style=&quot;scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); background-color: transparent; color: rgb(0, 0, 0);&quot;&gt;01&amp;nbsp; 02 03 04 05&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="304" y="30" width="350" height="110" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
