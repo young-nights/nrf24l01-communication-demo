@@ -1,6 +1,4 @@
-<<<<<<< Updated upstream
 # nRF24L01 使用说明
-=======
 # <font size=3>一、工程介绍</font>
 <font size=2>
 
@@ -138,6 +136,5 @@
 ![实物图](./images/nRF24L01_Pic1.png)
 
 </font>
->>>>>>> Stashed changes
 
 
