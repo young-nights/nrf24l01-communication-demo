@@ -35,7 +35,7 @@
 </font>
 
 <font size=3>详细关系图见下图：</font>
-![流程图](./nRF24L01.svg)
+![流程图](./images/nRF24L01.svg)
 
 
 
