@@ -17,7 +17,8 @@ const static struct nrf24_callback g_cb;
 rt_sem_t nrf24_send_sem = RT_NULL;
 /* 创建nRF24L01进入中断的二值信号量 */
 rt_sem_t nrf24_irq_sem = RT_NULL;
-
+/* 定义为全局变量 */
+nrf24_t _nrf24 = NULL;
 /**
   * @brief  This thread entry is used for nRF24L01
   * @retval void
@@ -26,8 +27,8 @@ void nRF24L01_Thread_entry(void* parameter)
 {
 
     /* 0. 给nrf24开创一个实际空间 */
-    nrf24_t nrf24 = malloc(sizeof(nrf24_t));
-    if (nrf24 == NULL) {
+    nrf24_t _nrf24 = malloc(sizeof(nrf24_t));
+    if (_nrf24 == NULL) {
         LOG_E("LOG:%d. nrf24 malloc error.",Record.ulog_cnt++);
     }
     else{
@@ -50,24 +51,24 @@ void nRF24L01_Thread_entry(void* parameter)
     }
     else{
         LOG_I("Succeed to create nrf24l01 irq semaphore.");
-        nrf24->nrf24_flags.using_irq = RT_TRUE;
+        _nrf24->nrf24_flags.using_irq = RT_TRUE;
     }
 
 
     /* 2. 获取中断引脚编号 */
-    nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 7);
+    _nrf24->port_api.nRF24L01_IRQ_Pin_Num = GET_PIN(C, 7);
 
 
     /* 3. 初始化SPI */
-    nRF24L01_SPI_Init(&nrf24->port_api);
+    nRF24L01_SPI_Init(&_nrf24->port_api);
 
 
     /* 4. 把spi底层函数整体拷贝到ops结构体中 */
-    nrf24->nrf24_ops = g_nrf24_func_ops;
-    nrf24->nrf24_cb  = g_cb;
+    _nrf24->nrf24_ops = g_nrf24_func_ops;
+    _nrf24->nrf24_cb  = g_cb;
 
     /* 5. 配置nRF24L01的参数*/
-    if(nRF24L01_Param_Config(&nrf24->nrf24_cfg) != RT_EOK){
+    if(nRF24L01_Param_Config(&_nrf24->nrf24_cfg) != RT_EOK){
         LOG_E("LOG:%d. nrf24 parameter config error.",Record.ulog_cnt++);
     }
     else{
@@ -75,7 +76,7 @@ void nRF24L01_Thread_entry(void* parameter)
     }
 
     /* 6. 配置启用中断引脚和中断回调函数 */
-    if(nRF24L01_IQR_GPIO_Config(&nrf24->port_api) != RT_EOK){
+    if(nRF24L01_IQR_GPIO_Config(&_nrf24->port_api) != RT_EOK){
         LOG_E("LOG:%d. nrf24 irq config error.",Record.ulog_cnt++);
     }
     else{
@@ -84,7 +85,7 @@ void nRF24L01_Thread_entry(void* parameter)
 
 
     /* 7. 通过回环通信，检测SPI硬件链路是否有误 */
-    if (nRF24L01_Check_SPI_Community(nrf24) != RT_EOK){
+    if (nRF24L01_Check_SPI_Community(_nrf24) != RT_EOK){
         LOG_E("LOG:%d. nRF24L01 check spi hardware false.",Record.ulog_cnt++);
     }
     else{
@@ -93,14 +94,14 @@ void nRF24L01_Thread_entry(void* parameter)
 
 
     /* 8. 先进入掉电模式 */
-    nrf24->nrf24_ops.nrf24_reset_ce();
-    nRF24L01_Enter_Power_Down_Mode(nrf24);
+    _nrf24->nrf24_ops.nrf24_reset_ce();
+    nRF24L01_Enter_Power_Down_Mode(_nrf24);
 
     /* 9. 解锁高级扩展功能 */
-    nRF24L01_Ensure_RWW_Features_Activated(nrf24);
+    nRF24L01_Ensure_RWW_Features_Activated(_nrf24);
 
     /* 10. 更新寄存器参数 */
-    if (nRF24L01_Update_Parameter(nrf24) != RT_EOK){
+    if (nRF24L01_Update_Parameter(_nrf24) != RT_EOK){
         LOG_E("LOG:%d. nRF24L01 update_onchip_config false.",Record.ulog_cnt++);
     }
     else{
@@ -108,7 +109,7 @@ void nRF24L01_Thread_entry(void* parameter)
     }
 
     /* 11. 读取寄存器参数 */
-    if (nRF24L01_Read_Onchip_Parameter(nrf24) != RT_EOK){
+    if (nRF24L01_Read_Onchip_Parameter(_nrf24) != RT_EOK){
         LOG_E("LOG:%d. nRF24L01 read parameter false.",Record.ulog_cnt++);
     }
     else{
@@ -116,26 +117,26 @@ void nRF24L01_Thread_entry(void* parameter)
     }
 
     /* 12. 清空"发送/接收"队列 */
-    nRF24L01_Flush_RX_FIFO(nrf24);
-    nRF24L01_Flush_TX_FIFO(nrf24);
+    nRF24L01_Flush_RX_FIFO(_nrf24);
+    nRF24L01_Flush_TX_FIFO(_nrf24);
     /* 13. 清除中断标志*/
-    nRF24L01_Clear_IRQ_Flags(nrf24);
+    nRF24L01_Clear_IRQ_Flags(_nrf24);
     /* 14. 清除重发计数和丢包计数*/
-    nRF24L01_Clear_Observe_TX(nrf24);
+    nRF24L01_Clear_Observe_TX(_nrf24);
     /* 15. 配置完成，进入上电模式 */
-    nRF24L01_Enter_Power_Up_Mode(nrf24);
-    nrf24->nrf24_ops.nrf24_set_ce();
+    nRF24L01_Enter_Power_Up_Mode(_nrf24);
+    _nrf24->nrf24_ops.nrf24_set_ce();
     LOG_I("LOG:%d. Successfully initialized",Record.ulog_cnt++);
     rt_kprintf("\r\n\r\n");
     rt_kprintf("----------------------------------\r\n");
     rt_kprintf("[nrf24/demo] running transmitter.\r\n");
 
+    nrf24l01_order_to_pipe(Order_nRF24L01_Connect_Control_Panel, NRF24_PIPE_0);
 
-    nRF24L01_Send_Packet(nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE);
 
     for(;;)
     {
-        nRF24L01_Run(nrf24);
+//        nRF24L01_Run(nrf24);
 
         rt_thread_mdelay(500);
     }
@@ -174,7 +175,6 @@ INIT_APP_EXPORT(nRF24L01_Thread_Init);
 
 
 
-const static char *ROLE_TABLE[] = {"PTX", "PRX"};
 static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
 {
     /*! Here just want to tell the user when the role is ROLE_PTX
@@ -182,7 +182,6 @@ static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
         However, it will matter when the role is ROLE_PRX*/
 
     static int cnt = 0;
-    static char tbuf[32];
     cnt++;
 
     if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PTX)
@@ -198,10 +197,6 @@ static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
     {
         rt_kprintf("tx_done ok");
     }
-
-    rt_kprintf(" (pipe%d)\n", pipe);
-    rt_sprintf(tbuf, "My role is %s [%dth]\n", ROLE_TABLE[nrf24->nrf24_cfg.config.prim_rx], cnt);
-    nRF24L01_Send_Packet(nrf24, (uint8_t *)tbuf,  rt_strlen(tbuf), pipe);
 }
 
 
