@@ -8,7 +8,7 @@
  * 2025-09-12     18452       the first version
  */
 #include "bsp_nrf24l01_message.h"
-
+#include "bsp_nrf24l01_driver.h"
 
 
 
@@ -201,7 +201,7 @@ uint8_t nrf24l01_portocol_get_command(const uint8_t *cmdBuf,const uint16_t cmdLe
         CRC16_Value = CrcCalc_Crc16Modbus(CMD_buffer, CMD_Length + 1);
         if(((CRC16_H << 8) | CRC16_L) == CRC16_Value)
         {
-//            nrf24l01_protocol_operation(dev,CMD_buffer);
+
             return CMD_TRUE;
         }
     }
@@ -269,7 +269,7 @@ void nrf24l01_order_to_pipe(uint8_t order, uint8_t pipe_num)
             rt_memset(emptyBuf, 0, sizeof(emptyBuf));
             emptyBuf[0] = FRAME_NRF24_CONNECT_CTRL_PANEL_CMD;
             package_len = nrf24l01_build_frame(FRAME_TYPE_ACT,FRAME_STATE_ASK,emptyBuf,1,frame_package);
-            nRF24L01_Send_Packet(_nrf24, frame_package, package_len, 0, nRF24_SEND_NEED_ACK);
+            nRF24L01_Send_Packet(_nrf24, frame_package, package_len, pipe_num, nRF24_SEND_NEED_ACK);
             _nrf24->nrf24_ops.nrf24_set_ce();
             rt_thread_mdelay(1);
 

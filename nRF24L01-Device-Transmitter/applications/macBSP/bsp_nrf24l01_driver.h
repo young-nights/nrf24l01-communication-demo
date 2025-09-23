@@ -322,7 +322,7 @@ void nRF24L01_Set_Role_Mode(nrf24_t nrf24, nrf24_role_et mode);
 void nRF24L01_Ensure_RWW_Features_Activated(nrf24_t nrf24);
 int nRF24L01_Run(nrf24_t nrf24);
 
-// bsp_nrf24l01_spi 文件中函数声明 -------------------------------------------------------------------
+// bsp_nrf24l01_spi 文件中函数声明
 int nRF24L01_SPI_Init(nrf24_port_api_t port_api);
 int nRF24L01_IQR_GPIO_Config(nrf24_port_api_t port_api);
 

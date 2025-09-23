@@ -61,6 +61,21 @@ typedef enum
     MODE_RX,
 } nrf24_mode_et;
 
+
+/***
+ * nRF24L01 的应答模式
+ * NEED_ACK :  发送后，需要应答，否则一直重发
+ * NO_ACK   :  发送后，无需应答
+ * IN_ACK   :  接收后，发送应答
+ */
+typedef enum
+{
+    nRF24_SEND_NEED_ACK,
+    nRF24_SEND_NO_ACK,
+    nRF24_RECE_IN_ACK,
+} ack_mode_et;
+
+
 /***
  * CRC 校验长度模式枚举
  * CRC_1_BYTE : 短包/低延迟场景，可节省 1 字节空中时间
@@ -275,6 +290,7 @@ struct nRF24L01_STRUCT
 // 外部信号量声明 -------------------------------------------------------------------
 extern rt_sem_t nrf24_send_sem;
 extern rt_sem_t nrf24_irq_sem;
+extern nrf24_t _nrf24;
 
 // 函数声明 -------------------------------------------------------------------
 int nRF24L01_Param_Config(nrf24_param_t param);
@@ -299,7 +315,7 @@ void nRF24L01_Read_Rx_Payload(nrf24_t nrf24, uint8_t *buf, uint8_t len);
 void nRF24L01_Flush_TX_FIFO(nrf24_t nrf24);
 void nRF24L01_Flush_RX_FIFO(nrf24_t nrf24);
 void NRF24L01_Set_TxAddr(nrf24_t nrf24, rt_uint8_t *addr_buf, rt_uint8_t length);
-int nRF24L01_Send_Packet(nrf24_t nrf24, uint8_t *data, uint8_t len, uint8_t pipe);
+int nRF24L01_Send_Packet(nrf24_t nrf24, uint8_t *data, uint8_t len, uint8_t pipe, ack_mode_et ack_mode);
 void nRF24L01_Set_Role_Mode(nrf24_t nrf24, nrf24_role_et mode);
 void nRF24L01_Ensure_RWW_Features_Activated(nrf24_t nrf24);
 int nRF24L01_Run(nrf24_t nrf24);
@@ -307,6 +323,9 @@ int nRF24L01_Run(nrf24_t nrf24);
 // bsp_nrf24l01_spi 文件中函数声明 -------------------------------------------------------------------
 int nRF24L01_SPI_Init(nrf24_port_api_t port_api);
 int nRF24L01_IQR_GPIO_Config(nrf24_port_api_t port_api);
+
+// bsp_nrf24l01_message 文件中函数声明
+void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num);
 
 // 以下是寄存器列表 ---------------------------------------------------------------------------------------------
 
