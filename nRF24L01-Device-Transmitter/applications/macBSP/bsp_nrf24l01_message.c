@@ -262,8 +262,7 @@ void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num)
     uint8_t package_len = 0;
     switch(order)
     {
-        // 0x31指令集-----------------------------------------------------------------------------------------------------------------
-
+        // 发送连接测试指令-需要应答： 55 AA 05 00 04 31 02 90 3D
         case Order_nRF24L01_Connect_Control_Panel:
         {
             rt_memset(emptyBuf, 0, sizeof(emptyBuf));
@@ -272,7 +271,6 @@ void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num)
             nRF24L01_Send_Packet(_nrf24, frame_package, package_len, pipe_num, nRF24_SEND_NEED_ACK);
             _nrf24->nrf24_ops.nrf24_set_ce();
             rt_thread_mdelay(1);
-
         }break;
 
 

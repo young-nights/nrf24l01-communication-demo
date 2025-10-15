@@ -131,13 +131,13 @@ void nRF24L01_Thread_entry(void* parameter)
     rt_kprintf("----------------------------------\r\n");
     rt_kprintf("[nrf24/demo] running transmitter.\r\n");
 
-    nrf24l01_order_to_pipe(Order_nRF24L01_Connect_Control_Panel, NRF24_PIPE_0);
+//    nrf24l01_order_to_pipe(Order_nRF24L01_Connect_Control_Panel, NRF24_PIPE_0);
 
 
     for(;;)
     {
 //        nRF24L01_Run(nrf24);
-
+        nrf24l01_order_to_pipe(Order_nRF24L01_Connect_Control_Panel, NRF24_PIPE_0);
         rt_thread_mdelay(500);
     }
 }
