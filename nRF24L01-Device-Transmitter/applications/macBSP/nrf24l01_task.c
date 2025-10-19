@@ -105,6 +105,7 @@ void nRF24L01_Thread_entry(void* parameter)
         LOG_E("LOG:%d. nRF24L01 update_onchip_config false.",Record.ulog_cnt++);
     }
     else{
+        nRF24L01_Set_Role_Mode(_nrf24, ROLE_PTX);
         LOG_I("LOG:%d. nRF24L01 update_onchip_config successful.",Record.ulog_cnt++);
     }
 
@@ -136,7 +137,7 @@ void nRF24L01_Thread_entry(void* parameter)
 
     for(;;)
     {
-//        nRF24L01_Run(_nrf24);
+        nRF24L01_Run(_nrf24);
 //        nrf24l01_order_to_pipe(Order_nRF24L01_Connect_Control_Panel, NRF24_PIPE_0);
         rt_thread_mdelay(500);
     }
