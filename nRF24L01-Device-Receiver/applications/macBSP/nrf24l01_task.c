@@ -208,7 +208,6 @@ static void nrf24l01_rx_ind(nrf24_t nrf24, uint8_t *data, uint8_t len, int pipe)
         rt_kprintf("%02X ", data[i]);
     }
     rt_kprintf("\n");
-    nRF24L01_Send_Packet(_nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE, nRF24_RECE_IN_ACK);
 }
 
 
