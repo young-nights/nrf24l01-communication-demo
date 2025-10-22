@@ -548,7 +548,6 @@ int nRF24L01_Send_Packet(nrf24_t nrf24, uint8_t *data, uint8_t len, uint8_t pipe
     // 如果是接收端（PRX）
     else if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PRX && ack_mode == nRF24_RECE_IN_ACK){
         nRF24L01_Write_Tx_Payload_InAck(nrf24, pipe, data, len);
-        rt_sem_release(nrf24_send_sem);
     }
 
     return RT_EOK;
@@ -689,6 +688,7 @@ int nRF24L01_Run(nrf24_t nrf24)
          if(pipe < 5){
              uint8_t data_buf[32];
              uint8_t length = nRF24L01_Read_Top_RXFIFO_Width(nrf24);
+             LOG_I("Receive length = %d. \n",length);
              nRF24L01_Read_Rx_Payload(nrf24, data_buf, length);
 
              if(nrf24l01_portocol_get_command(data_buf,length) == CMD_TRUE){

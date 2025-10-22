@@ -201,7 +201,7 @@ uint8_t nrf24l01_portocol_get_command(const uint8_t *cmdBuf,const uint16_t cmdLe
         CRC16_Value = CrcCalc_Crc16Modbus(CMD_buffer, CMD_Length + 1);
         if(((CRC16_H << 8) | CRC16_L) == CRC16_Value)
         {
-//            nrf24l01_protocol_operation(dev,CMD_buffer);
+            nrf24l01_protocol_operation(CMD_buffer);
             return CMD_TRUE;
         }
     }
@@ -230,7 +230,10 @@ void nrf24l01_protocol_operation(uint8_t* CmdBuf)
             switch(*(CmdBuf + 5))
             {
                 //----------------------------------------------------------------------------------------------------
+                case FRAME_NRF24_CONNECT_CTRL_PANEL_CMD:
+                {
 
+                }break;
                 //----------------------------------------------------------------------------------------------------
 
                 default:    break;
@@ -255,7 +258,7 @@ void nrf24l01_protocol_operation(uint8_t* CmdBuf)
  */
 extern rt_uint8_t largeid_buf[8];
 extern rt_uint8_t smallid_buf[8];
-void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num)
+void nrf24l01_order_to_pipe(nrf24_t nrf24, uint8_t order, nrf24_pipe_et pipe_num)
 {
     uint8_t emptyBuf[20] = {0};
     uint8_t frame_package[30] = { 0 };
@@ -265,8 +268,6 @@ void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num)
         // 发送连接测试指令-需要应答： 55 AA 05 00 04 31 02 01 11 90
         case Order_nRF24L01_Connect_Control_Panel:
         {
-            _nrf24->nrf24_ops.nrf24_reset_ce();
-
             rt_memset(emptyBuf, 0, sizeof(emptyBuf));
             emptyBuf[0] = FRAME_NRF24_CONNECT_CTRL_PANEL_CMD;
             package_len = nrf24l01_build_frame(FRAME_TYPE_ACT,FRAME_STATE_ASK,emptyBuf,1,frame_package);
@@ -278,9 +279,8 @@ void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num)
             }
             rt_kprintf("\n");
 
-            nRF24L01_Send_Packet(_nrf24, frame_package, package_len, pipe_num, nRF24_SEND_NEED_ACK);
-            _nrf24->nrf24_ops.nrf24_set_ce();
-            rt_thread_mdelay(1);
+            nRF24L01_Send_Packet(nrf24, frame_package, package_len, pipe_num, nRF24_SEND_NEED_ACK);
+
         }break;
 
 

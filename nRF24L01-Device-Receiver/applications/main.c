@@ -55,6 +55,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      // 给发送端发送ACK载荷
+      nRF24L01_Send_Packet(_nrf24,(uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE,nRF24_RECE_IN_ACK);
     /* USER CODE END WHILE */
       rt_thread_mdelay(500);
     /* USER CODE BEGIN 3 */

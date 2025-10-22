@@ -132,13 +132,11 @@ void nRF24L01_Thread_entry(void* parameter)
     rt_kprintf("----------------------------------\r\n");
     rt_kprintf("[nrf24/demo] running transmitter.\r\n");
 
-    nrf24l01_order_to_pipe(Order_nRF24L01_Connect_Control_Panel, NRF24_PIPE_0);
-
+    nrf24l01_order_to_pipe(_nrf24, Order_nRF24L01_Connect_Control_Panel, NRF24_DEFAULT_PIPE);
 
     for(;;)
     {
         nRF24L01_Run(_nrf24);
-//        nrf24l01_order_to_pipe(Order_nRF24L01_Connect_Control_Panel, NRF24_PIPE_0);
         rt_thread_mdelay(500);
     }
 }
@@ -181,9 +179,6 @@ static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
     /*! Here just want to tell the user when the role is ROLE_PTX
         the pipe have no special meaning except indicating (send) FAILED or OK
         However, it will matter when the role is ROLE_PRX*/
-
-    static int cnt = 0;
-    cnt++;
 
     if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PTX)
     {

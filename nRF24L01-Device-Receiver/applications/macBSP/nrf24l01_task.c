@@ -187,15 +187,15 @@ static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
     if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PTX)
     {
         if(pipe == NRF24_PIPE_NONE){
-            rt_kprintf("tx_done failed");
+            rt_kprintf("tx_done failed\n");
         }
         else{
-            rt_kprintf("tx_done ok");
+            rt_kprintf("tx_done ok\n");
         }
     }
-    else
+    else if(nrf24->nrf24_cfg.config.prim_rx == ROLE_PRX)
     {
-        rt_kprintf("tx_done ok");
+        rt_kprintf("tx_done ok\n");
     }
 }
 
@@ -204,7 +204,11 @@ static void nrf24l01_tx_done(nrf24_t nrf24, rt_uint8_t pipe)
 static void nrf24l01_rx_ind(nrf24_t nrf24, uint8_t *data, uint8_t len, int pipe)
 {
     rt_kprintf("(p%d): ", pipe);
-    rt_kprintf((char *)data);
+    for (uint8_t i = 0; i < len; i++) {
+        rt_kprintf("%02X ", data[i]);
+    }
+    rt_kprintf("\n");
+    nRF24L01_Send_Packet(_nrf24, (uint8_t *)"Hi\r\n", 4, NRF24_DEFAULT_PIPE, nRF24_RECE_IN_ACK);
 }
 
 

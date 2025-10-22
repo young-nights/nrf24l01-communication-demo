@@ -433,6 +433,7 @@ void nRF24L01_Enter_Power_Up_Mode(nrf24_t nrf24)
  */
 void nRF24L01_Write_Tx_Payload_Ack(nrf24_t nrf24, const uint8_t *buf, uint8_t len)
 {
+
     uint8_t cmd = NRF24CMD_W_TX_PLOAD_ACK;
     nrf24->nrf24_ops.nrf24_send_then_send(&nrf24->port_api, &cmd, 1, buf, len);
 }
@@ -535,7 +536,6 @@ int nRF24L01_Send_Packet(nrf24_t nrf24, uint8_t *data, uint8_t len, uint8_t pipe
         return RT_ERROR;
     }
 
-
    // 如果是发送端（PTX）
     if (nrf24->nrf24_cfg.config.prim_rx == ROLE_PTX && ack_mode == nRF24_SEND_NEED_ACK){
         nRF24L01_Write_Tx_Payload_Ack(nrf24, data, len);
@@ -625,7 +625,7 @@ int nRF24L01_Run(nrf24_t nrf24)
 
     // 2. 读取status状态标志，并清除中断触发标志位
      nrf24->nrf24_flags.status = nRF24L01_Read_Status_Register(nrf24);
-     nRF24L01_Clear_Status_Register(nrf24, NRF24BITMASK_RX_DR | NRF24BITMASK_TX_DS);
+     nRF24L01_Clear_Status_Register(nrf24, NRF24BITMASK_RX_DR | NRF24BITMASK_TX_DS | NRF24BITMASK_MAX_RT);
 
      // 3. 分析哪条信道接收的数据
      uint8_t pipe = (nrf24->nrf24_flags.status & NRF24BITMASK_RX_P_NO) >> 1;
@@ -683,7 +683,6 @@ int nRF24L01_Run(nrf24_t nrf24)
                  }
                  ret_flag |= 1;
              }
-
          }
      }
      return ret_flag;

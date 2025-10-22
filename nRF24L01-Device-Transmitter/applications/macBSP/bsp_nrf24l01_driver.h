@@ -327,7 +327,7 @@ int nRF24L01_SPI_Init(nrf24_port_api_t port_api);
 int nRF24L01_IQR_GPIO_Config(nrf24_port_api_t port_api);
 
 // bsp_nrf24l01_message 文件中函数声明
-void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num);
+void nrf24l01_order_to_pipe(nrf24_t nrf24, uint8_t order, nrf24_pipe_et pipe_num);
 
 // 以下是寄存器列表 ---------------------------------------------------------------------------------------------
 

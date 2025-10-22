@@ -233,8 +233,8 @@ void nrf24l01_protocol_operation(uint8_t* CmdBuf)
                 case FRAME_NRF24_CONNECT_CTRL_PANEL_CMD:
                 {
                     LOG_I("nRF24L01 Connect succeed.\n");
-                }break;
 
+                }break;
 
                 //----------------------------------------------------------------------------------------------------
 
@@ -260,23 +260,28 @@ void nrf24l01_protocol_operation(uint8_t* CmdBuf)
  */
 extern rt_uint8_t largeid_buf[8];
 extern rt_uint8_t smallid_buf[8];
-void nrf24l01_order_to_pipe(uint8_t order, uint8_t pipe_num)
+void nrf24l01_order_to_pipe(uint8_t order, nrf24_pipe_et pipe_num)
 {
     uint8_t emptyBuf[20] = {0};
     uint8_t frame_package[30] = { 0 };
     uint8_t package_len = 0;
     switch(order)
     {
-        // 0x31指令集-----------------------------------------------------------------------------------------------------------------
-
+        // 发送连接测试指令-需要应答： 55 AA 05 00 04 31 02 01 11 90
         case Order_nRF24L01_Connect_Control_Panel:
         {
             rt_memset(emptyBuf, 0, sizeof(emptyBuf));
             emptyBuf[0] = FRAME_NRF24_CONNECT_CTRL_PANEL_CMD;
             package_len = nrf24l01_build_frame(FRAME_TYPE_ACT,FRAME_STATE_ASK,emptyBuf,1,frame_package);
-            nRF24L01_Send_Packet(_nrf24, frame_package, package_len, pipe_num, nRF24_SEND_NEED_ACK);
-            _nrf24->nrf24_ops.nrf24_set_ce();
-            rt_thread_mdelay(1);
+
+            // 打印 frame_package 内容
+            rt_kprintf("frame_package[%d]: ", package_len);
+            for (int i = 0; i < package_len; i++) {
+                rt_kprintf("%02X ", frame_package[i]);
+            }
+            rt_kprintf("\n");
+
+            nRF24L01_Send_Packet(_nrf24, frame_package, package_len, pipe_num, nRF24_SEND_NO_ACK);
 
         }break;
 
