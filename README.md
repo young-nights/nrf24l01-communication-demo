@@ -1,3 +1,36 @@
+<style>
+.highlight{
+  color: white;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.mint_green{
+  color: white;
+  background: #adcdadf2; 
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.red {
+  color: #ff0000;
+}
+.green {
+  color:rgb(10, 162, 10);
+}
+.blue {
+  color:rgb(17, 0, 255);
+}
+
+.wathet {
+  color:rgb(0, 132, 255);
+}
+</style>
+
+
+
+
 # <font size=3>一、工程介绍</font>
 <font size=2>
 
@@ -115,20 +148,73 @@
 </font>
 
 
-## <font size=2>5. nRF24L01使用场景答疑</font>
+
+# <font size=3>三、通讯协议</font>
+
+<div style="background:#e8f5e8;padding:10px;border-radius:6px;color:#333;">
 
 <font size=2> 
 
-**1. 现在有A、B、C三个nRF24L01设备，如果A设备向B和C设备同时广播一条数据，也即B和C的接收管道均可以接收A的数据，A设备如何区分B和C的ACK？**
-答：
+**1.版本说明**
 
+| 版本号 | 变更原因 |
+| ------ | -------- |
+| V1.0   | 首次编制 |
+
+**2.术语**
+
+Receiver：接收方
+Transmitter：发送方
+
+**3.概述**
+
+通信以主/从方式为主，Transmitter 作为通信主机，在需要时，发起一次通信。 Receiver 作为从机设备，收到主机命令后，执行相关动作或回应相关数据。当出现异常或其他情况时，Receiver 也会主动上报一些信息给 Transmitter 主机。
+
+**4.串口参数**
+==这个串口参数配置在使用串口通讯时起效，这里只是采用了帧结构。==
+
+| 波特率  | 数据位 | 奇偶校验 | 停止位 |
+| ------- | ------ | -------- | ------ |
+| 9600bps | 8位    | 无       | 1位    |
+
+**5.帧结构**
+
+![帧结构图](./images/nRF24L01_Pic2.png)
+
+<u> **帧头(Head)** </u>
+固定为 0x55，0xAA
+
+<u> **数据长度(Length)** </u>
+设备编号+命令的字节数。即：(ID + Type + State + Code + Parameter)的字节数。
+
+<u> **设备编号(ID)** </u>
+设备机型对应的 ID 编码。<span class="red">例如：本次设备机型的 ID 编码为：0x00,0x73。</span>
+
+<u> **命令类型(Type)** </u>
+命令类型包含三类：
+0x31: 命令（动作）类，从机收到此类命令，通常执行某些动作。
+0x32: 写数据（设置参数）类，从机收到此类命令，更新相关参数，如模式、强度档位等。
+0x33: 读数据（读取参数、状态）类，从机收到此类命令，回应相关参数或状态信息。
+0x66: 主动上报（异常）类，比如温度过高、NTC 异常、强度改变等。
+
+<u> **命令状态(State)** </u>
+用于指示传输/校验是否出错。 Receiver 下发时，此域填 0x02。
+Transmitter 回传时，若传输/校验出错，此域填 0x00；否则填 0x01。
+
+<u> **命令编码(Code)** </u>
+不同机型，根据具体功能，各自定义具体的命令码，详见机型功能命令码表。
+
+<u> **参数列表(Parameter)** </u>
+不同命令码，可以具有不同长度的参数，多字节参数时，高位字节在前。详见机型功能命令码表。
+
+<u> **校验码(CRC)** </u>
+校验多项式：X16+X15+X2+1。除帧头外，其它字节全部参与校验。校验码高位在前，低位在后。
 
 </font>
 
+</div>
 
-
-
-# <font size=3>三、测试硬件</font>
+# <font size=3>四、测试硬件</font>
 
 <font size=2> 
 本仓库的测试代码主要基于两个demo板，使用的nRF24L01是AS01系列的无线通讯模块，模板作为插件，插在功能板上，同样的，单片机最小系统板也插在功能板上。
