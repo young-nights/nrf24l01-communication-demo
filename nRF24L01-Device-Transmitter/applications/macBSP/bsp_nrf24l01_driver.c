@@ -428,6 +428,32 @@ void nRF24L01_Enter_Power_Up_Mode(nrf24_t nrf24)
 }
 
 
+
+/***
+ * @brief 设置nRF24L01的待机模式
+ * @note
+ */
+void nRF24L01_Standby_Set(nrf24_t nrf24, nrf24_standby_et mode)
+{
+    if(mode == Standby_one)
+    {
+        nRF24L01_Enter_Power_Up_Mode(nrf24);
+        nrf24->nrf24_ops.nrf24_reset_ce();
+    }
+    else if(mode == Standby_two)
+    {
+        nRF24L01_Enter_Power_Up_Mode(nrf24);
+        nrf24->nrf24_ops.nrf24_set_ce();
+    }
+    else if(mode == PowerDown)
+    {
+        nRF24L01_Enter_Power_Down_Mode(nrf24);
+    }
+}
+
+
+
+
 /***
  * @brief 发送一包数据，若未收到 ACK，会重发（最多 RETR 次）
  */

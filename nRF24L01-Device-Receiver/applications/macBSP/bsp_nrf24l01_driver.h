@@ -114,6 +114,21 @@ typedef enum
 } nrf24_adr_et;
 
 
+/***
+ * nRF24L01的待机模式的枚举
+ * Standby-Ⅰ   : PWR_UP = 1 且 CE = 0
+ * Standby-Ⅱ  : PWR_UP = 1 且 CE = 1 但 TX FIFO 为空
+ * Power-Down: 低功耗模式
+ */
+typedef enum
+{
+    Standby_one = 0,
+    Standby_two,
+    PowerDown,
+} nrf24_standby_et;
+
+
+
 
 /***
  * nRF24L01 的参数配置结构体

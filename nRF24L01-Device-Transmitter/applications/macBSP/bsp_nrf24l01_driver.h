@@ -115,7 +115,18 @@ typedef enum
     ADR_2Mbps = 1,
 } nrf24_adr_et;
 
-
+/***
+ * nRF24L01的待机模式的枚举
+ * Standby-Ⅰ   : PWR_UP = 1 且 CE = 0
+ * Standby-Ⅱ  : PWR_UP = 1 且 CE = 1 但 TX FIFO 为空
+ * Power-Down: 低功耗模式
+ */
+typedef enum
+{
+    Standby_one = 0,
+    Standby_two,
+    PowerDown,
+} nrf24_standby_et;
 
 /***
  * nRF24L01 的参数配置结构体
@@ -310,6 +321,7 @@ void nRF24L01_Clear_Observe_TX(nrf24_t nrf24);
 uint8_t nRF24L01_Read_Top_RXFIFO_Width(nrf24_t nrf24);
 void nRF24L01_Enter_Power_Down_Mode(nrf24_t nrf24);
 void nRF24L01_Enter_Power_Up_Mode(nrf24_t nrf24);
+void nRF24L01_Standby_Set(nrf24_t nrf24, nrf24_standby_et mode);
 void nRF24L01_Write_Tx_Payload_Ack(nrf24_t nrf24, const uint8_t *buf, uint8_t len);
 void nRF24L01_Write_Tx_Payload_NoAck(nrf24_t nrf24, const uint8_t *buf, uint8_t len);
 void nRF24L01_Write_Tx_Payload_InAck(nrf24_t nrf24, uint8_t pipe, const uint8_t *buf, uint8_t len);
