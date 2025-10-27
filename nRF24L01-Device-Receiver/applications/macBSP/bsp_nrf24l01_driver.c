@@ -36,7 +36,6 @@ int nRF24L01_Param_Config(nrf24_param_t param)
     param->en_aa.p2 = 0;
     param->en_aa.p3 = 0;
     param->en_aa.p4 = 0;
-
     param->en_aa.p5 = 0;
 
     /* EN_RXADDR */
