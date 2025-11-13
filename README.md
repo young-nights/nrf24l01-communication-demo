@@ -1,3 +1,11 @@
+
+```bash
+create_at：2025/09/08
+aliases：验证nRF24L01双设备通讯
+hardware：STM32F103RET6最小系统板
+platform：RT-Thread
+```
+
 # nRF24L01 使用说明
 # <font size=3>一、工程介绍</font>
 <font size=2>
