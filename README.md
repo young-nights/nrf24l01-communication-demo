@@ -28,7 +28,7 @@
 }
 </style>
 
-```C
+```bash
 create_at：2025/09/08
 aliases：验证nRF24L01双设备通讯
 hardware：STM32F103RET6最小系统板
