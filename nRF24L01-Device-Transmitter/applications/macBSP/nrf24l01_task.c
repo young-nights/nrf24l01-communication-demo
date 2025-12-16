@@ -27,7 +27,7 @@ void nRF24L01_Thread_entry(void* parameter)
 {
 
     /* 0. 给nrf24开创一个实际空间 */
-    nrf24_t _nrf24 = malloc(sizeof(nrf24_t));
+    _nrf24 = malloc(sizeof(nrf24_t));
     if (_nrf24 == NULL) {
         LOG_E("LOG:%d. nrf24 malloc error.",Record.ulog_cnt++);
     }
